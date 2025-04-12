@@ -378,6 +378,10 @@ export interface Artifact {
    */
   name?: string | null;
 
+  /**
+   * Optional MIME type of the file content.
+   * @default null
+   */
   mimeType?: string | null;
 
   /**

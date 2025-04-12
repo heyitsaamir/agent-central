@@ -18,7 +18,7 @@ export type { TaskStore } from "./store";
 export { A2AError } from "./error";
 
 // Re-export all schema types for convenience
-export * as schema from "./schema";
+export * as schema from "a2aschema";
 
 // Example basic usage (for documentation or testing)
 /*

@@ -1,5 +1,6 @@
 // @ts-nocheck
 
+import * as schema from "a2aschema";
 import type { CorsOptions } from "cors";
 import cors from "cors";
 import express, {
@@ -8,7 +9,6 @@ import express, {
   type RequestHandler,
   type Response,
 } from "express";
-import * as schema from "./schema";
 // Import TaskAndHistory along with TaskStore implementations
 import {
   InMemoryTaskStore,
@@ -165,8 +165,8 @@ export class A2AServer {
         typeof this.corsOptions === "string"
           ? { origin: this.corsOptions }
           : this.corsOptions === true
-          ? undefined // Use default cors options if true
-          : this.corsOptions;
+            ? undefined // Use default cors options if true
+            : this.corsOptions;
       app.use(cors(options));
     }
 

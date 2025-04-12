@@ -1,4 +1,4 @@
-import { Artifact, TaskStatus } from "./schema";
+import { Artifact, TaskStatus } from "a2aschema";
 
 /**
  * Generates a timestamp in ISO 8601 format.

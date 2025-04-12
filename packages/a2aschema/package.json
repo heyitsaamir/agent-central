@@ -1,5 +1,5 @@
 {
-  "name": "a2aserver",
+  "name": "a2aschema",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,8 +14,7 @@
     "@types/express": "^5.0.1",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "a2aschema": "*"
+    "express": "^4.21.2"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

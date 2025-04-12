@@ -1,4 +1,4 @@
-import * as schema from "./schema";
+import * as schema from "a2aschema";
 
 /**
  * Context object provided to the TaskHandler.

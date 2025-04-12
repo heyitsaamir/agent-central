@@ -1,7 +1,7 @@
+import * as schema from "a2aschema";
 import fs from "fs/promises";
 import path from "path";
 import { A2AError } from "./error";
-import * as schema from "./schema";
 
 // Helper type for the simplified store
 export interface TaskAndHistory {
