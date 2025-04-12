@@ -1,0 +1,44 @@
+{
+  "name": "standupagent",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "main": "dist/index",
+  "types": "dist/index",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "npx rimraf ./dist",
+    "build": "npx tsup",
+    "postbuild": "cp package.json dist/package.json && cp package-lock.json dist/package-lock.json",
+    "start": "node .",
+    "dev": "npx nodemon -w \"./src/**\" -e ts --exec \"node -r ts-node/register -r dotenv/config ./src/index.ts\"",
+    "dev:teamsfx": "npx env-cmd --silent -f .env npm run dev",
+    "dev:teamsfx:testtool": "npx env-cmd --silent -f .env npm run dev",
+    "dev:teamsfx:launch-testtool": "npx env-cmd --silent -f env/.env.testtool teamsapptester start"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.3.0",
+    "@microsoft/spark.ai": "^0.2.4",
+    "@microsoft/spark.api": "latest",
+    "@microsoft/spark.apps": "latest",
+    "@microsoft/spark.cards": "latest",
+    "@microsoft/spark.common": "latest",
+    "@microsoft/spark.dev": "latest",
+    "@microsoft/spark.graph": "latest",
+    "@microsoft/spark.openai": "^0.2.4",
+    "a2aserver": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "dotenv": "^16.4.5",
+    "env-cmd": "latest",
+    "nodemon": "^3.1.4",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.4.0",
+    "typescript": "^5.4.5"
+  }
+}
