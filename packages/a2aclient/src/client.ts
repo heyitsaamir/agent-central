@@ -359,7 +359,8 @@ export class A2AClient {
 
     // Assumption: Server exposes the card at a simple GET endpoint.
     // Adjust this URL/method if the server provides the card differently.
-    const cardUrl = `${this.baseUrl}/agent-card`; // Or just this.baseUrl if served at root
+    const baseUrl = new URL(this.baseUrl).origin;
+    const cardUrl = `${baseUrl}/.well-known/agent.json`; // Or just this.baseUrl if served at root
 
     try {
       const response = await this.fetchImpl(cardUrl, {

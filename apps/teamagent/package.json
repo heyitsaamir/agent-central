@@ -16,12 +16,16 @@
     "dev": "npx nodemon -w \"./src/**\" -e ts --exec \"node -r ts-node/register -r dotenv/config ./src/index.ts\""
   },
   "dependencies": {
+    "@microsoft/spark.ai": "^0.2.6",
     "@microsoft/spark.api": "latest",
     "@microsoft/spark.apps": "latest",
     "@microsoft/spark.cards": "latest",
     "@microsoft/spark.common": "latest",
+    "@microsoft/spark.dev": "latest",
     "@microsoft/spark.graph": "latest",
-    "@microsoft/spark.dev": "latest"
+    "@microsoft/spark.openai": "^0.2.6",
+    "@types/uuid": "^10.0.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.5.4",

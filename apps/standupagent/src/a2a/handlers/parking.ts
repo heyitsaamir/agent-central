@@ -1,7 +1,7 @@
 import { ChatPrompt } from "@microsoft/spark.ai";
 import { OpenAIChatModel } from "@microsoft/spark.openai";
 import { type schema, TaskContext, TaskYieldUpdate } from "a2aserver";
-import { Standup } from "../../models/Standup";
+import { ensureStandupInitialized } from "../../utils/initializeStandup";
 
 type Part = schema.Part;
 type TextPart = schema.TextPart;
@@ -20,7 +20,43 @@ export async function* parkingLotAgentLogic(
     }
 
     const text = textPart.text;
-    const standup = new Standup();
+    const standup = await ensureStandupInitialized();
+    if (standup.type === "error") {
+      yield {
+        state: "failed",
+        message: {
+          role: "agent",
+          parts: [
+            {
+              text: "Standup not initialized.",
+            },
+          ],
+        },
+      };
+      return;
+    }
+
+    // Validate
+    let tenantId: string;
+    if (
+      context.task.metadata?.tenantId != null &&
+      typeof context.task.metadata.tenantId === "string"
+    ) {
+      tenantId = context.task.metadata.tenantId;
+    } else {
+      yield {
+        state: "failed",
+        message: {
+          role: "agent",
+          parts: [
+            {
+              text: "Tenant ID is missing in the metadata.",
+            },
+          ],
+        },
+      };
+      return;
+    }
 
     yield {
       state: "working",
@@ -71,9 +107,9 @@ export async function* parkingLotAgentLogic(
         conversationId: string;
         userId: string;
       }) => {
-        const group = await standup.validateGroup(
+        const group = await standup.data.validateGroup(
           args.conversationId,
-          "unknown" // Note: In real implementation, get this from context
+          tenantId
         );
         if (!group) {
           return "No standup group registered.";
@@ -102,9 +138,9 @@ export async function* parkingLotAgentLogic(
         required: ["conversationId"],
       },
       async (args: { conversationId: string }) => {
-        const result = await standup.getParkingLotItems(
+        const result = await standup.data.getParkingLotItems(
           args.conversationId,
-          "unknown" // Note: In real implementation, get this from context
+          tenantId
         );
 
         if (result.type === "error") {
@@ -116,10 +152,7 @@ export async function* parkingLotAgentLogic(
         }
 
         responseData = { items: result.data.parkingLotItems };
-        const items = result.data.parkingLotItems
-          .map(({ item, userName }) => `• ${item} (by ${userName})`)
-          .join("\n");
-        return `Current Parking Lot Items:\n${items}`;
+        return responseData;
       }
     );
 
@@ -127,13 +160,22 @@ export async function* parkingLotAgentLogic(
     const result = await nlpPrompt.send(text);
 
     yield {
+      name: "currentParkingLot",
+      parts: [
+        {
+          type: "data",
+          data: responseData,
+        },
+      ],
+    };
+
+    yield {
       state: "completed",
       message: {
         role: "agent",
         parts: [
           {
-            text: result.content,
-            data: responseData,
+            text: `Command processed successfully`,
           },
         ],
       },

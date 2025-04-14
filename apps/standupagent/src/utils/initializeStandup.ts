@@ -1,34 +1,42 @@
 import { Standup } from "../models/Standup";
+import { Result } from "../models/types";
 
 let standupInstance: Standup | null = null;
 
-export async function ensureStandupInitialized({
-  send,
-}: {
-  send: (message: any) => Promise<any>;
-}): Promise<Standup | null> {
+export async function ensureStandupInitialized(): Promise<Result<Standup>> {
   if (!standupInstance) {
     try {
       const cosmosConnectionString = process.env.COSMOS_CONNECTION_STRING;
       if (!cosmosConnectionString) {
-        await send(
-          "Error: COSMOS_CONNECTION_STRING environment variable not set"
-        );
         console.error(
           "Error: COSMOS_CONNECTION_STRING environment variable not set"
         );
-        return null;
+        return {
+          type: "error",
+          message: "COSMOS_CONNECTION_STRING environment variable not set",
+        };
       }
       const initializingStandup = new Standup();
       await initializingStandup.initialize(cosmosConnectionString);
       standupInstance = initializingStandup;
       console.log("Standup initialized successfully!");
-      return initializingStandup;
+      return {
+        type: "success",
+        message: "Standup initialized successfully!",
+        data: standupInstance,
+      };
     } catch (error) {
       console.error("Error initializing Standup:", error);
-      return null;
+      return {
+        type: "error",
+        message: `Error initializing Standup: ${error}`,
+      };
     }
   }
 
-  return standupInstance;
+  return {
+    type: "success",
+    message: "Standup already initialized",
+    data: standupInstance,
+  };
 }

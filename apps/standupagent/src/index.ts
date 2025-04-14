@@ -18,8 +18,9 @@ app.on(
   "message",
   async ({ send, activity, isSignedIn, signin, signout, api }) => {
     console.log("Received message:", activity);
-    const standup = await ensureStandupInitialized({ send });
-    if (!standup) {
+    const standup = await ensureStandupInitialized();
+    if (standup.type === "error") {
+      await send(standup.message);
       console.log("Standup not initialized");
       return;
     }
@@ -34,25 +35,26 @@ app.on(
         isSignedIn,
         app,
       },
-      standup
+      standup.data
     );
   }
 );
 
 // Handle dialog events
 app.on("dialog.open", async ({ activity, send }) => {
-  const standup = await ensureStandupInitialized({
-    send,
-  });
-  if (!standup) return;
-  return handleDialogOpen(activity, standup);
+  const standup = await ensureStandupInitialized();
+  if (standup.type === "error") return;
+  return handleDialogOpen(activity, standup.data);
 });
 
 app.on("dialog.submit", async ({ activity, send }) => {
-  const standup = await ensureStandupInitialized({ send });
-  if (!standup) return;
+  const standup = await ensureStandupInitialized();
+  if (standup.type === "error") {
+    console.error(standup.message);
+    return;
+  }
 
-  const response = await handleDialogSubmit(activity, send, standup);
+  const response = await handleDialogSubmit(activity, send, standup.data);
   return {
     status: response?.status || 200,
     body: {
@@ -66,10 +68,13 @@ app.on("dialog.submit", async ({ activity, send }) => {
 
 // Handle card actions
 app.on("card.action", async ({ activity, send, api }) => {
-  const standup = await ensureStandupInitialized({ send });
-  if (!standup) return;
+  const standup = await ensureStandupInitialized();
+  if (standup.type === "error") {
+    console.error(standup.message);
+    return;
+  }
 
-  const response = await handleCardAction(activity, send, api, standup);
+  const response = await handleCardAction(activity, send, api, standup.data);
   return {
     statusCode: 200,
     type: "application/vnd.microsoft.activity.message",
@@ -118,12 +123,13 @@ const parkingLotCard: schema.AgentCard = {
     {
       id: "get_parking_lot",
       name: "Get Parking Lot Items",
-      description: "Retrieve all current parking lot items.",
+      description:
+        "Retrieve all current parking lot items for a given conversation id",
       tags: ["parking-lot", "list"],
       examples: [
-        "Show me the parking lot items",
-        "What's in the parking lot?",
-        "List all items in parking lot",
+        "Show me the parking lot items for conversation id 123",
+        "What's in the parking lot for conversation id 123?",
+        "List all items in parking lot for conversation id 123",
       ],
     },
   ],
