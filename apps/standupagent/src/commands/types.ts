@@ -1,4 +1,4 @@
-import { IActivityContext } from "@microsoft/spark.apps";
+import { IActivityContext } from "@microsoft/teams.apps";
 
 export interface CommandContext {
   app: IActivityContext["app"];

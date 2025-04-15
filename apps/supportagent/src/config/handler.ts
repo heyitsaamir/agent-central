@@ -3,7 +3,7 @@ import {
   IConfigFetchInvokeActivity,
   IConfigSubmitInvokeActivity,
   cardAttachment,
-} from "@microsoft/spark.api";
+} from "@microsoft/teams.api";
 import { createConfigCard } from "./cards";
 import { FileConfigStorage } from "./storage";
 import { SupportConfig } from "./types";

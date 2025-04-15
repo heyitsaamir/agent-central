@@ -1,5 +1,5 @@
-import { ChatPrompt } from "@microsoft/spark.ai";
-import { OpenAIChatModel } from "@microsoft/spark.openai";
+import { ChatPrompt } from "@microsoft/teams.ai";
+import { OpenAIChatModel } from "@microsoft/teams.openai";
 import { SupportCommands } from "./commands";
 import { FileConfigStorage } from "./config/storage";
 import { SupportResponse } from "./types";

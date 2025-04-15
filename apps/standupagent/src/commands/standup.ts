@@ -1,4 +1,4 @@
-import { cardAttachment } from "@microsoft/spark.api";
+import { cardAttachment } from "@microsoft/teams.api";
 import { createStandupCard } from "../models/AdaptiveCards";
 import { Standup } from "../models/Standup";
 import { CommandContext } from "./types";

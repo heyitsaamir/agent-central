@@ -1,5 +1,5 @@
-import { App } from "@microsoft/spark.apps";
-import { DevtoolsPlugin } from "@microsoft/spark.dev";
+import { App } from "@microsoft/teams.apps";
+import { DevtoolsPlugin } from "@microsoft/teams.dev";
 import { NLPHandler } from "./nlp";
 
 const app = new App({

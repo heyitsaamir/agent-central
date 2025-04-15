@@ -1,4 +1,4 @@
-import { ICard, SubmitAction } from "@microsoft/spark.cards";
+import { ICard, SubmitAction } from "@microsoft/teams.cards";
 import { ConfigCardData, SupportConfig } from "./types";
 
 export function createConfigCard(

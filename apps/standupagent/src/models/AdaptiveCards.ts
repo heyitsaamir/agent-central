@@ -6,7 +6,7 @@ import {
   SubmitAction,
   TaskFetchAction,
   TaskFetchData,
-} from "@microsoft/spark.cards";
+} from "@microsoft/teams.cards";
 import { StandupResponse, User } from "./types";
 
 const convertTextToMarkdownList = (text: string): string => {

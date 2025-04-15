@@ -2,7 +2,7 @@ import {
   cardAttachment,
   ITaskFetchInvokeActivity,
   ITaskSubmitInvokeActivity,
-} from "@microsoft/spark.api";
+} from "@microsoft/teams.api";
 import { createTaskModule } from "../models/AdaptiveCards";
 import { Standup } from "../models/Standup";
 import { StandupResponse } from "../models/types";

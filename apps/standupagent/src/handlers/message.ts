@@ -1,6 +1,6 @@
-import { ChatPrompt } from "@microsoft/spark.ai";
-import { IMessageActivity, MentionEntity } from "@microsoft/spark.api";
-import { OpenAIChatModel } from "@microsoft/spark.openai";
+import { ChatPrompt } from "@microsoft/teams.ai";
+import { IMessageActivity, MentionEntity } from "@microsoft/teams.api";
+import { OpenAIChatModel } from "@microsoft/teams.openai";
 import { executeRegister } from "../commands/register";
 import { executeCloseStandup, executeStartStandup } from "../commands/standup";
 import { CommandContext } from "../commands/types";

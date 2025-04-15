@@ -1,5 +1,5 @@
-import { ChatPrompt } from "@microsoft/spark.ai";
-import { OpenAIChatModel } from "@microsoft/spark.openai";
+import { ChatPrompt } from "@microsoft/teams.ai";
+import { OpenAIChatModel } from "@microsoft/teams.openai";
 import { A2AClient } from "a2aclient";
 import { Task, TaskSendParams } from "a2aschema";
 import { v4 as uuidv4 } from "uuid";

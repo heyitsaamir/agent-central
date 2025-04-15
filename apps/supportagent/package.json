@@ -19,13 +19,13 @@
     "dev:teamsfx:launch-testtool": "npx env-cmd --silent -f env/.env.testtool teamsapptester start"
   },
   "dependencies": {
-    "@microsoft/spark.ai": "latest",
-    "@microsoft/spark.api": "latest",
-    "@microsoft/spark.apps": "latest",
-    "@microsoft/spark.cards": "latest",
-    "@microsoft/spark.common": "latest",
-    "@microsoft/spark.dev": "latest",
-    "@microsoft/spark.openai": "latest",
+    "@microsoft/teams.ai": "latest",
+    "@microsoft/teams.api": "latest",
+    "@microsoft/teams.apps": "latest",
+    "@microsoft/teams.cards": "latest",
+    "@microsoft/teams.common": "latest",
+    "@microsoft/teams.dev": "latest",
+    "@microsoft/teams.openai": "latest",
     "a2aserver": "*",
     "octokit": "^4.1.3"
   },

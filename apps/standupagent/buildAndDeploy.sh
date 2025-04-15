@@ -2,16 +2,10 @@ echo "Logging in to Azure and ACR..."
 # Login to Azure
 az acr login --name standupagentacr
 
-echo "Building project..."
-npm run clean
-npm run build
-
-echo "Building Docker image..."
-# Build and tag the image
+echo "Building and pushing Docker image..."
+# Build and tag the image from root directory
+cd ../..
 docker build -t standupagentacr.azurecr.io/standupagent:latest .
-
-echo "Pushing Docker image to ACR..."
-# Push to ACR
 docker push standupagentacr.azurecr.io/standupagent:latest
 
 echo "Deploying to Azure Web App..."

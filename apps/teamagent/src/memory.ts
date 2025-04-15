@@ -1,5 +1,5 @@
-import { IMemory } from "@microsoft/spark.ai";
-import { Message } from "@microsoft/spark.ai/dist/message.js";
+import { IMemory } from "@microsoft/teams.ai";
+import { Message } from "@microsoft/teams.ai/dist/message.js";
 import fs from "fs/promises";
 import path from "path";
 

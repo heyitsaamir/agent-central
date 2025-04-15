@@ -1,5 +1,5 @@
-import { App, HttpPlugin } from "@microsoft/spark.apps";
-import { DevtoolsPlugin } from "@microsoft/spark.dev";
+import { App, HttpPlugin } from "@microsoft/teams.apps";
+import { DevtoolsPlugin } from "@microsoft/teams.dev";
 import { A2AServer, schema } from "a2aserver";
 import { parkingLotAgentLogic } from "./a2a/handlers/parking";
 import { handleCardAction } from "./handlers/cardActions";

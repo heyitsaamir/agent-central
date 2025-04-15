@@ -1,4 +1,4 @@
-import * as http from "@microsoft/spark.common/http";
+import * as http from "@microsoft/teams.common/http";
 import { Result, StandupSummary } from "../models/types";
 import { IStandupStorage, Page, StorageInfo } from "./Storage";
 

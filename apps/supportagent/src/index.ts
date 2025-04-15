@@ -1,5 +1,5 @@
-import { App, HttpPlugin } from "@microsoft/spark.apps";
-import { DevtoolsPlugin } from "@microsoft/spark.dev";
+import { App, HttpPlugin } from "@microsoft/teams.apps";
+import { DevtoolsPlugin } from "@microsoft/teams.dev";
 import { A2AServer } from "a2aserver";
 import * as dotenv from "dotenv";
 import { supportAgentCard, supportAgentLogic } from "./a2a/handlers/support";

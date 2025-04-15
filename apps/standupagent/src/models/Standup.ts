@@ -1,4 +1,4 @@
-import { ICard } from "@microsoft/spark.cards";
+import { ICard } from "@microsoft/teams.cards";
 import { PersistentStandupService } from "../services/PersistentStandupService";
 import { StandupGroupManager } from "../services/StandupGroupManager";
 import { IStandupStorage } from "../services/Storage";

@@ -1,4 +1,4 @@
-import { IMessageActivity } from "@microsoft/spark.api";
+import { IMessageActivity } from "@microsoft/teams.api";
 
 export type Activity = IMessageActivity;
 
