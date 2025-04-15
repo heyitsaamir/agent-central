@@ -115,9 +115,9 @@ const parkingLotCard: schema.AgentCard = {
       description: "Add a new item to the parking lot for discussion.",
       tags: ["parking-lot", "add"],
       examples: [
-        "Add 'API changes discussion' to the parking lot",
-        "I need to discuss deployment workflow in the next standup",
-        "Add monitoring setup to parking lot",
+        "Add 'API changes discussion' to the parking lot for conversation id 123",
+        "I need to discuss deployment workflow in the next standup for conversation id 123",
+        "Add monitoring setup to parking lot for conversation id 123",
       ],
     },
     {

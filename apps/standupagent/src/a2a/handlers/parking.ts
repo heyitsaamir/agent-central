@@ -21,7 +21,9 @@ export async function* parkingLotAgentLogic(
 
     const text = textPart.text;
     const standup = await ensureStandupInitialized();
+    console.log("Handling parking lot command:", text);
     if (standup.type === "error") {
+      console.error("Standup not initialized:", standup.message);
       yield {
         state: "failed",
         message: {
@@ -58,6 +60,28 @@ export async function* parkingLotAgentLogic(
       return;
     }
 
+    let userId: string;
+    if (
+      context.task.metadata?.userId != null &&
+      typeof context.task.metadata.userId === "string"
+    ) {
+      userId = context.task.metadata.userId;
+    } else {
+      console.error("User ID is missing in the metadata.");
+      yield {
+        state: "failed",
+        message: {
+          role: "agent",
+          parts: [
+            {
+              text: "User ID is missing in the metadata.",
+            },
+          ],
+        },
+      };
+      return;
+    }
+
     yield {
       state: "working",
       message: {
@@ -79,6 +103,7 @@ export async function* parkingLotAgentLogic(
     });
 
     let responseData: any = null;
+    let toolCall: string = "";
 
     // Register parking lot functions
     nlpPrompt.function(
@@ -95,12 +120,8 @@ export async function* parkingLotAgentLogic(
             type: "string",
             description: "The conversation ID",
           },
-          userId: {
-            type: "string",
-            description: "The user ID",
-          },
         },
-        required: ["item", "conversationId", "userId"],
+        required: ["item", "conversationId"],
       },
       async (args: {
         item: string;
@@ -115,10 +136,11 @@ export async function* parkingLotAgentLogic(
           return "No standup group registered.";
         }
 
-        await group.addParkingLotItem(args.userId, args.item);
+        await group.addParkingLotItem(userId, args.item);
+        toolCall = "addParkingLot";
         responseData = {
           item: args.item,
-          userName: context.userMessage.role, // Using role as username for example
+          result: "added to parking lot for discussion",
         };
         return "Item has been added to the parking lot.";
       }
@@ -150,7 +172,7 @@ export async function* parkingLotAgentLogic(
         if (result.data.parkingLotItems.length === 0) {
           return "No parking lot items have been added yet.";
         }
-
+        toolCall = "getParkingLot";
         responseData = { items: result.data.parkingLotItems };
         return responseData;
       }
@@ -159,8 +181,10 @@ export async function* parkingLotAgentLogic(
     // Process the command
     const result = await nlpPrompt.send(text);
 
+    console.log("NLP result:", result);
+    console.log("Tool call:", toolCall);
     yield {
-      name: "currentParkingLot",
+      name: toolCall,
       parts: [
         {
           type: "data",

@@ -1,6 +1,8 @@
-import { App } from "@microsoft/spark.apps";
+import { App, HttpPlugin } from "@microsoft/spark.apps";
 import { DevtoolsPlugin } from "@microsoft/spark.dev";
+import { A2AServer } from "a2aserver";
 import * as dotenv from "dotenv";
+import { supportAgentCard, supportAgentLogic } from "./a2a/handlers/support";
 import { ConfigHandler } from "./config/handler";
 import { SupportHandler } from "./handler";
 
@@ -21,8 +23,10 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
+const httpPlugin = new HttpPlugin();
+
 const app = new App({
-  plugins: [new DevtoolsPlugin()],
+  plugins: [new DevtoolsPlugin(), httpPlugin],
 });
 
 const supportHandler = new SupportHandler();
@@ -36,7 +40,7 @@ app.on("message", async ({ send, activity }) => {
       activity.text,
       activity
     );
-    await send(response);
+    await send(response.content);
   } catch (error) {
     console.error("Error processing message:", error);
     await send(
@@ -53,7 +57,17 @@ app.on("config.submit", async ({ activity }) => {
   return configHandler.handleSubmit(activity);
 });
 
+const a2aServer = new A2AServer(
+  supportAgentLogic,
+  (httpPlugin as any).express,
+  {
+    card: supportAgentCard,
+    basePath: "/a2a",
+  }
+);
+
 (async () => {
-  await app.start(+(process.env.PORT || 6000));
-  console.log("Support agent is running!");
+  await a2aServer.start();
+  await app.start(+(process.env.PORT || 8000));
+  console.log("Support agent is running with A2A capabilities!");
 })();

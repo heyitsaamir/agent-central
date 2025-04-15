@@ -2,6 +2,10 @@ import { IMessageActivity } from "@microsoft/spark.api";
 
 export type Activity = IMessageActivity;
 
+export interface SupportResponse {
+  content: string;
+  data: { toolName: string; result: any }[];
+}
 export interface Issue {
   number: number;
   title: string;
