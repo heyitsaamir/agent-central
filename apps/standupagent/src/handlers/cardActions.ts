@@ -2,6 +2,18 @@ import { Standup } from "../models/Standup";
 import { StandupResponse } from "../models/types";
 import { OneNoteStorage } from "../services/OneNoteStorage";
 
+const safeJsonParse: <T>(jsonString: string, def: T) => T = <T>(
+  jsonString: string,
+  def: T
+) => {
+  try {
+    return JSON.parse(jsonString) as T;
+  } catch (error) {
+    console.error("Failed to parse JSON string:", jsonString, error);
+    return def as T;
+  }
+};
+
 export async function handleCardAction(
   activity: any,
   send: (message: any) => Promise<any>,
@@ -86,6 +98,41 @@ export async function handleCardAction(
     }
 
     case "close_standup": {
+      // Get unchecked parking lot items
+      const uncheckedItems = [];
+      // Toggle items come as id: 'true' or id: 'false'
+      for (const [key, value] of Object.entries(data)) {
+        if (
+          key.startsWith("parking_lot_") &&
+          typeof value === "string" &&
+          value.startsWith("Not Discussed - ")
+        ) {
+          const item = value.replace("Not Discussed - ", "");
+          uncheckedItems.push(item);
+        }
+      }
+
+      // If there are unchecked items, add them to first user's parking lot
+      if (uncheckedItems.length > 0) {
+        const group = await standup.validateGroup(
+          conversationId,
+          activity.conversation.tenantId || "unknown"
+        );
+        if (group) {
+          const users = await group.getUsers();
+          if (users.length > 0) {
+            const firstUser = users[0];
+            await group.addParkingLotItem(
+              firstUser.id,
+              uncheckedItems
+                .map((item) => `${item} (from previous parking lot)`)
+                .join("\n")
+            );
+          }
+        }
+      }
+
+      // Close the standup
       const result = await standup.closeStandup(
         conversationId,
         activity.conversation.tenantId || "unknown"

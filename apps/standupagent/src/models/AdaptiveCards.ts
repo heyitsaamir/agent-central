@@ -6,10 +6,11 @@ import {
   SubmitAction,
   TaskFetchAction,
   TaskFetchData,
+  ToggleInput,
 } from "@microsoft/teams.cards";
 import { StandupResponse, User } from "./types";
 
-const convertTextToMarkdownList = (text: string): string => {
+const convertTextToMarkdownList = (text: string, userName?: string): string => {
   return text
     .trim()
     .split("\n")
@@ -19,7 +20,7 @@ const convertTextToMarkdownList = (text: string): string => {
       const cleanedItem = item.replace(/^[\-\*]\s*/, "");
       return cleanedItem;
     })
-    .map((item) => `- ${item}`)
+    .map((item) => `- ${item}` + (userName ? ` (added by ${userName})` : ""))
     .join("\n");
 };
 
@@ -40,7 +41,9 @@ export function createStandupSummaryCard(
 
   const parkingLotItems = responses
     .filter((r) => r.parkingLot && r.parkingLot.trim() !== "")
-    .map((r) => convertTextToMarkdownList(r.parkingLot || "").trim())
+    .map((r) =>
+      convertTextToMarkdownList(r.parkingLot || "", r.userName).trim()
+    )
     .join("\n");
 
   const card: ICard = {
@@ -179,6 +182,10 @@ export function createStandupCard(
   completedResponses: string[] = [],
   previousParkingLot?: string[]
 ): ICard {
+  const previousParkingLotItems = previousParkingLot
+    ?.flatMap((p) => p.split("\n").map((p) => p.trim()))
+    ?.filter((p) => p.trim() !== "")
+    .map((p) => convertTextToMarkdownList(p));
   return {
     type: "AdaptiveCard",
     $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
@@ -205,22 +212,34 @@ export function createStandupCard(
             },
           ]
         : []),
-      ...(previousParkingLot && previousParkingLot.length > 0
+      ...(previousParkingLotItems && previousParkingLotItems.length > 0
         ? [
             {
               type: "TextBlock" as const,
-              text: "Previous Parking Lot Items:",
+              text: "Discussed Previous Parking Lot Items:",
               wrap: true,
               spacing: "medium" as const,
             },
-            ...previousParkingLot
-              .flatMap((item) => item.trim().split("\n"))
-              .map((item) => ({
-                type: "TextBlock" as const,
-                text: `• ${item}`,
-                wrap: true,
-                spacing: "none" as const,
-              })),
+            {
+              type: "TextBlock" as const,
+              text: "Uncheck the values that still need discussion",
+              wrap: true,
+              size: "small" as const,
+              weight: "lighter",
+              isSubtle: true,
+              spacing: "none" as const,
+            } satisfies ITextBlock,
+            ...previousParkingLotItems.map(
+              (item, index) =>
+                new ToggleInput(item, {
+                  id: `parking_lot_${index}`,
+                  value: `Discussed - ${item}`,
+                  valueOff: `Not Discussed - ${item}`,
+                  valueOn: `Discussed - ${item}`,
+                  wrap: true,
+                  spacing: "none" as const,
+                })
+            ),
           ]
         : []),
       {
@@ -234,7 +253,10 @@ export function createStandupCard(
             title: "Close standup",
           })
             .withStyle("default")
-            .withData({ action: "close_standup" }),
+            .withData({
+              action: "close_standup",
+              previousParkingLot: JSON.stringify(previousParkingLotItems),
+            }),
         ],
       },
     ],
