@@ -1,4 +1,5 @@
 import {
+  Card,
   Element,
   ExecuteAction,
   ICard,
@@ -10,6 +11,11 @@ import {
 } from "@microsoft/teams.cards";
 import { StandupResponse, User } from "./types";
 
+export const SPECIAL_STRINGS = {
+  fromPreviousParkingLot: "(from previous parking lot)",
+  addedByPrefix: "(added by",
+};
+
 const convertTextToMarkdownList = (text: string, userName?: string): string => {
   return text
     .trim()
@@ -20,7 +26,13 @@ const convertTextToMarkdownList = (text: string, userName?: string): string => {
       const cleanedItem = item.replace(/^[\-\*]\s*/, "");
       return cleanedItem;
     })
-    .map((item) => `- ${item}` + (userName ? ` (added by ${userName})` : ""))
+    .map((item) => {
+      if (item.includes(SPECIAL_STRINGS.addedByPrefix)) {
+        return `- ${item}`;
+      }
+
+      return `- ${item} (added by ${userName})`;
+    })
     .join("\n");
 };
 
@@ -306,6 +318,54 @@ export function createPageSelectionCard(
       },
     ],
   };
+}
+
+export function createParkingLotCard(
+  items: Array<{ item: string; userName: string }>
+): ICard {
+  return new Card().withBody(
+    {
+      type: "ColumnSet",
+      columns: [
+        {
+          type: "Column",
+          width: "stretch",
+          items: [
+            {
+              type: "TextBlock" as const,
+              text: "**Current Parking Lot Items**",
+              wrap: true,
+              style: "heading",
+            },
+          ],
+        },
+      ],
+    },
+    ...(items.length === 0
+      ? [
+          {
+            type: "TextBlock" as const,
+            text: "_No parking lot items have been added yet._",
+            wrap: true,
+            isSubtle: true,
+          },
+        ]
+      : items.map(({ item, userName }) => {
+          let itemText: string;
+          if (item.includes(SPECIAL_STRINGS.addedByPrefix)) {
+            itemText = `- ${item}`;
+          }
+
+          itemText = `- ${item} (added by ${userName})`;
+
+          return {
+            type: "TextBlock" as const,
+            text: itemText,
+            wrap: true,
+            spacing: "small" as const,
+          };
+        }))
+  );
 }
 
 export function createTaskModule(

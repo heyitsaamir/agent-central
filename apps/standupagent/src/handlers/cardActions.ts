@@ -1,3 +1,4 @@
+import { SPECIAL_STRINGS } from "../models/AdaptiveCards";
 import { Standup } from "../models/Standup";
 import { StandupResponse } from "../models/types";
 import { OneNoteStorage } from "../services/OneNoteStorage";
@@ -125,7 +126,13 @@ export async function handleCardAction(
             await group.addParkingLotItem(
               firstUser.id,
               uncheckedItems
-                .map((item) => `${item} (from previous parking lot)`)
+                .map((item) => {
+                  if (item.includes(SPECIAL_STRINGS.fromPreviousParkingLot)) {
+                    return item;
+                  }
+
+                  return `${item} ${SPECIAL_STRINGS.fromPreviousParkingLot}`;
+                })
                 .join("\n")
             );
           }

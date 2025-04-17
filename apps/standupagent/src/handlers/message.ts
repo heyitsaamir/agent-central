@@ -9,6 +9,7 @@ import {
   executeGroupDetails,
   executeRemoveUsers,
 } from "../commands/users";
+import { createParkingLotCard } from "../models/AdaptiveCards";
 import { Standup } from "../models/Standup";
 
 export async function handleMessage(
@@ -151,19 +152,16 @@ export async function handleMessage(
           return;
         }
 
-        if (result.data.parkingLotItems.length === 0) {
-          await partialContext.send(
-            "No parking lot items have been added yet."
-          );
-          return;
-        }
-
-        let message = "**Current Parking Lot Items**\n```\n";
-        result.data.parkingLotItems.forEach(({ item, userName }) => {
-          message += `• ${item} (by ${userName})\n`;
+        const card = createParkingLotCard(result.data.parkingLotItems);
+        await partialContext.send({
+          type: "message",
+          attachments: [
+            {
+              contentType: "application/vnd.microsoft.card.adaptive",
+              content: card,
+            },
+          ],
         });
-        message += "```\n\nTo add an item: !parkinglot <your item here>";
-        await partialContext.send(message);
         return;
       }
 
@@ -325,19 +323,16 @@ export async function handleMessage(
           return;
         }
 
-        if (result.data.parkingLotItems.length === 0) {
-          await partialContext.send(
-            "No parking lot items have been added yet."
-          );
-          return;
-        }
-
-        let message = "**Current Parking Lot Items**\n```\n";
-        result.data.parkingLotItems.forEach(({ item, userName }) => {
-          message += `• ${item} (by ${userName})\n`;
+        const card = createParkingLotCard(result.data.parkingLotItems);
+        await partialContext.send({
+          type: "message",
+          attachments: [
+            {
+              contentType: "application/vnd.microsoft.card.adaptive",
+              content: card,
+            },
+          ],
         });
-        message += "```";
-        await partialContext.send(message);
       }
     );
 
