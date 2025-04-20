@@ -1,5 +1,4 @@
 import { App, HttpPlugin } from "@microsoft/teams.apps";
-import { DevtoolsPlugin } from "@microsoft/teams.dev";
 import { A2AServer, schema } from "a2aserver";
 import { parkingLotAgentLogic } from "./a2a/handlers/parking";
 import { handleCardAction } from "./handlers/cardActions";
@@ -10,7 +9,7 @@ import { ensureStandupInitialized } from "./utils/initializeStandup";
 const httpPlugin = new HttpPlugin();
 
 const app = new App({
-  plugins: [new DevtoolsPlugin(), httpPlugin],
+  plugins: [httpPlugin],
 });
 
 // Handle incoming messages
