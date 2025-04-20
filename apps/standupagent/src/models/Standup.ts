@@ -339,12 +339,12 @@ export class Standup {
     const responses = await group.getActiveResponses();
     const parkingLotItems = responses
       .filter((r) => r.parkingLot)
-      .map((r) => {
+      .flatMap((r) => {
         const user = users.find((u) => u.id === r.userId);
-        return {
-          item: r.parkingLot!,
+        return r.parkingLot!.split("\n").map((item) => ({
+          item,
           userName: user ? user.name : "Unknown",
-        };
+        }));
       });
 
     return {
