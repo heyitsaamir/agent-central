@@ -177,4 +177,31 @@ export class PersistentStandupService {
     const history = await this.historyStorage.get(key.id, key.tenantId);
     return history?.summaries || [];
   }
+
+  async getAllGroups(tenantId: string): Promise<StandupGroup[]> {
+    if (!this.groupStorage.queryByTenantId) {
+      throw new Error("Storage provider does not support querying by tenantId");
+    }
+
+    const groups = await this.groupStorage.queryByTenantId(tenantId);
+    return Promise.all(
+      groups
+        .filter((g): g is GroupStorageItem => g.type === "group")
+        .map((groupData) => {
+          const storage = new NoStorage(); // For now, we only support NoStorage for queried groups
+          const group = new StandupGroup(
+            groupData.id,
+            storage,
+            groupData.tenantId,
+            this,
+            groupData.users || [],
+            groupData.activeResponses || [],
+            groupData.isActive || false,
+            groupData.activeStandupActivityId || null,
+            groupData.saveHistory || false
+          );
+          return this.wrapGroupData(group);
+        })
+    );
+  }
 }

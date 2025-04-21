@@ -73,4 +73,9 @@ export class StandupGroupManager {
     if (!group) return null;
     return this.wrapGroup(group);
   }
+
+  async getAllGroups(tenantId: string): Promise<StandupGroup[]> {
+    const groups = await this.persistentService.getAllGroups(tenantId);
+    return Promise.all(groups.map((group) => this.wrapGroup(group)));
+  }
 }

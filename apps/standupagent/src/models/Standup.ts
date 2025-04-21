@@ -383,4 +383,109 @@ export class Standup {
       message: "Group details retrieved successfully",
     };
   }
+
+  async getHistoricalStandups(
+    conversationId: string,
+    userId: string,
+    tenantId: string,
+    isGroup: boolean
+  ): Promise<
+    Result<{
+      histories: Array<{
+        date: Date;
+        groupName?: string;
+        responses: Array<{
+          userName: string;
+          completedWork: string;
+          plannedWork: string;
+          parkingLot?: string;
+        }>;
+      }>;
+    }>
+  > {
+    if (isGroup) {
+      const group = await this.validateGroup(conversationId, tenantId);
+      if (!group) {
+        return {
+          type: "error",
+          message: "No standup group found for this conversation.",
+        };
+      }
+
+      const histories = await this.persistentService.getStandupHistory(group);
+      return {
+        type: "success",
+        data: {
+          histories: histories.map((h) => ({
+            date: new Date(h.date),
+            responses: h.responses.map((r) => {
+              const user = h.participants.find((p) => p.id === r.userId);
+              return {
+                userName: user ? user.name : "Unknown",
+                completedWork: r.completedWork,
+                plannedWork: r.plannedWork,
+                parkingLot: r.parkingLot,
+              };
+            }),
+          })),
+        },
+        message: "History retrieved successfully",
+      };
+    } else {
+      // For individual users, get their history across all groups
+      const allGroups = await this.groupManager.getAllGroups(tenantId);
+      const userHistories = await Promise.all(
+        allGroups.map(async (group) => {
+          const histories =
+            await this.persistentService.getStandupHistory(group);
+          return histories.map((h) => ({
+            date: new Date(h.date),
+            groupName: group.conversationId,
+            responses: h.responses
+              .filter((r) => r.userId === userId)
+              .map((r) => {
+                const user = h.participants.find((p) => p.id === r.userId);
+                return {
+                  userName: user ? user.name : "Unknown",
+                  completedWork: r.completedWork,
+                  plannedWork: r.plannedWork,
+                  parkingLot: r.parkingLot,
+                };
+              }),
+          }));
+        })
+      );
+
+      type HistoryItem = {
+        date: Date;
+        groupName?: string;
+        responses: Array<{
+          userName: string;
+          completedWork: string;
+          plannedWork: string;
+          parkingLot?: string;
+        }>;
+      };
+
+      const flattenedHistories = userHistories
+        .flat()
+        .filter((h: HistoryItem) => h.responses.length > 0)
+        .map((h) => ({
+          ...h,
+          date: new Date(h.date), // Ensure date is a proper Date object
+        }))
+        .sort(
+          (a: HistoryItem, b: HistoryItem) =>
+            b.date.getTime() - a.date.getTime()
+        );
+
+      return {
+        type: "success",
+        data: {
+          histories: flattenedHistories,
+        },
+        message: "History retrieved successfully",
+      };
+    }
+  }
 }

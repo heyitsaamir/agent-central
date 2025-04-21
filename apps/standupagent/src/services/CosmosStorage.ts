@@ -3,7 +3,7 @@ import { StandupResponse, User } from "../models/types";
 
 export interface IStorage<
   TKey = any,
-  TValue extends BaseStorageItem = BaseStorageItem
+  TValue extends BaseStorageItem = BaseStorageItem,
 > {
   get(
     key: TKey,
@@ -11,14 +11,18 @@ export interface IStorage<
   ): TValue | undefined | Promise<TValue | undefined>;
   set(key: TKey, value: TValue): void | Promise<void>;
   delete(key: TKey, tenantId?: string): void | Promise<void>;
+  queryByTenantId?(tenantId: string): Promise<TValue[]>;
 }
 
 export class CosmosStorage<
   TKey extends string | number = string,
-  TValue extends BaseStorageItem = BaseStorageItem
+  TValue extends BaseStorageItem = BaseStorageItem,
 > implements IStorage<TKey, TValue>
 {
-  constructor(private container: Container, private partitionKeyPath: string) {}
+  constructor(
+    private container: Container,
+    private partitionKeyPath: string
+  ) {}
 
   async get(key: TKey, tenantId: string): Promise<TValue | undefined> {
     try {
@@ -41,6 +45,17 @@ export class CosmosStorage<
   async delete(key: TKey, tenantId: string): Promise<void> {
     await this.container.item(key.toString(), tenantId).delete();
   }
+
+  async queryByTenantId(tenantId: string): Promise<TValue[]> {
+    const querySpec = {
+      query: "SELECT * FROM c WHERE c.tenantId = @tenantId",
+      parameters: [{ name: "@tenantId", value: tenantId }],
+    };
+    const { resources } = await this.container.items
+      .query<TValue>(querySpec)
+      .fetchAll();
+    return resources;
+  }
 }
 
 export class CosmosStorageFactory {
@@ -53,7 +68,7 @@ export class CosmosStorageFactory {
 
   static async getStorage<
     TKey extends string | number = string,
-    TValue extends BaseStorageItem = BaseStorageItem
+    TValue extends BaseStorageItem = BaseStorageItem,
   >(
     databaseName: string,
     containerName: string,

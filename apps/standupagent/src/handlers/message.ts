@@ -9,7 +9,10 @@ import {
   executeGroupDetails,
   executeRemoveUsers,
 } from "../commands/users";
-import { createParkingLotCard } from "../models/AdaptiveCards";
+import {
+  createHistoricalStandupsCard,
+  createParkingLotCard,
+} from "../models/AdaptiveCards";
 import { Standup } from "../models/Standup";
 
 export async function handleMessage(
@@ -86,6 +89,31 @@ export async function handleMessage(
     }
 
     if (text.startsWith("!history")) {
+      // Check if it's a history view command or history settings command
+      if (text === "!history" || text.includes("view")) {
+        const result = await standup.getHistoricalStandups(
+          context.conversationId,
+          context.userId,
+          context.tenantId,
+          activity.conversation.conversationType !== "personal"
+        );
+        if (result.type === "error") {
+          await partialContext.send(result.message);
+          return;
+        }
+        await partialContext.send({
+          type: "message",
+          attachments: [
+            {
+              contentType: "application/vnd.microsoft.card.adaptive",
+              content: createHistoricalStandupsCard(result.data.histories),
+            },
+          ],
+        });
+        return;
+      }
+
+      // Handle history settings
       const group = await standup.validateGroup(
         context.conversationId,
         context.tenantId
@@ -371,11 +399,46 @@ export async function handleMessage(
     );
 
     nlpPrompt.function(
+      "viewHistory",
+      "View historical standup information",
+      async () => {
+        didMessageUser = true;
+        try {
+          console.log("Viewing standup history");
+          const result = await standup.getHistoricalStandups(
+            context.conversationId,
+            context.userId,
+            context.tenantId,
+            activity.conversation.isGroup ?? false
+          );
+
+          if (result.type === "error") {
+            await partialContext.send(result.message);
+            return;
+          }
+
+          await partialContext.send({
+            type: "message",
+            attachments: [
+              {
+                contentType: "application/vnd.microsoft.card.adaptive",
+                content: createHistoricalStandupsCard(result.data.histories),
+              },
+            ],
+          });
+        } catch (error) {
+          console.error("Error viewing standup history:", error);
+          throw error;
+        }
+      }
+    );
+
+    nlpPrompt.function(
       "purpose",
       "Explain the purpose of the bot",
       async () => {
         console.log("Explaining the purpose of the bot");
-        return `I can help you conduct standups by managing your standup group, adding or removing users, starting or closing standup sessions, managing history settings, and saving parking lot items for future standups (use !parkinglot or just tell me what you want to discuss).`;
+        return `I can help you conduct standups by managing your standup group, adding or removing users, starting or closing standup sessions, managing history settings, viewing historical standups, and saving parking lot items for future standups (use !parkinglot or just tell me what you want to discuss).`;
       }
     );
 

@@ -27,7 +27,7 @@ const convertTextToMarkdownList = (text: string, userName?: string): string => {
       return cleanedItem;
     })
     .map((item) => {
-      if (item.includes(SPECIAL_STRINGS.addedByPrefix)) {
+      if (userName == null || item.includes(SPECIAL_STRINGS.addedByPrefix)) {
         return `- ${item}`;
       }
 
@@ -102,7 +102,7 @@ export function createStandupSummaryCard(
           type: "Table",
           columns: [
             {
-              type: "Column",
+              type: "Column" as const,
               width: 2,
             },
             {
@@ -176,12 +176,12 @@ export function createStandupSummaryCard(
               wrap: true,
               style: "heading",
               separator: true,
-            } as ITextBlock,
+            } satisfies ITextBlock,
             {
               type: "TextBlock" as const,
               text: parkingLotItems,
               wrap: true,
-            } as ITextBlock,
+            } satisfies ITextBlock,
           ]
         : []),
     ],
@@ -435,6 +435,161 @@ export function createTaskModule(
           }),
         ],
       },
+    ],
+  };
+}
+
+export function createHistoricalStandupsCard(
+  histories: Array<{
+    date: Date;
+    groupName?: string;
+    responses: Array<{
+      userName: string;
+      completedWork: string;
+      plannedWork: string;
+      parkingLot?: string;
+    }>;
+  }>
+): ICard {
+  return {
+    type: "AdaptiveCard",
+    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+    version: "1.5",
+    body: [
+      {
+        type: "TextBlock" as const,
+        text: "Historical Standups",
+        size: "large",
+        weight: "bolder",
+      },
+      ...histories.flatMap((history) => [
+        {
+          type: "Container" as const,
+          items: [
+            {
+              type: "TextBlock" as const,
+              text: history.date.toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              wrap: true,
+              style: "heading" as const,
+            },
+            ...(history.groupName
+              ? [
+                  {
+                    type: "TextBlock" as const,
+                    text: `Group: ${history.groupName}`,
+                    wrap: true,
+                    size: "small" as const,
+                  },
+                ]
+              : []),
+          ],
+        },
+        ...history.responses
+          .filter((r) => r.completedWork || r.plannedWork)
+          .flatMap((response): Element[] => [
+            {
+              type: "TextBlock" as const,
+              text: `**${response.userName}**`,
+              wrap: true,
+              separator: true,
+            },
+            {
+              type: "Table",
+              columns: [
+                {
+                  type: "Column",
+                  width: 2,
+                },
+                {
+                  type: "Column",
+                  width: 6,
+                },
+              ],
+              rows: [
+                {
+                  type: "TableRow" as const,
+                  cells: [
+                    {
+                      type: "TableCell" as const,
+                      items: [
+                        {
+                          type: "TextBlock" as const,
+                          text: "Completed",
+                          wrap: true,
+                        },
+                      ],
+                    },
+                    {
+                      type: "TableCell" as const,
+                      items: [
+                        {
+                          type: "TextBlock" as const,
+                          text: convertTextToMarkdownList(
+                            response.completedWork
+                          ),
+                          wrap: true,
+                          weight: "Lighter",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: "TableRow" as const,
+                  cells: [
+                    {
+                      type: "TableCell" as const,
+                      items: [
+                        {
+                          type: "TextBlock" as const,
+                          text: "Planned",
+                          wrap: true,
+                        },
+                      ],
+                    },
+                    {
+                      type: "TableCell" as const,
+                      items: [
+                        {
+                          type: "TextBlock" as const,
+                          text: convertTextToMarkdownList(response.plannedWork),
+                          wrap: true,
+                          weight: "Lighter",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            } as any,
+            // Skipping parking lot items for now
+            // ...(response.parkingLot
+            //   ? [
+            //       {
+            //         type: "TextBlock" as const,
+            //         text: "Parking Lot Items:",
+            //         wrap: true,
+            //         size: "small",
+            //       },
+            //       {
+            //         type: "TextBlock" as const,
+            //         text: convertTextToMarkdownList(
+            //           response.parkingLot,
+            //           response.userName
+            //         ),
+            //         wrap: true,
+            //         size: "small",
+            //         weight: "lighter",
+            //       },
+            //     ]
+            //   : []),
+          ]),
+      ]),
     ],
   };
 }
