@@ -13,7 +13,10 @@ export class TeamCommands {
     this.storage = new TeamStorage();
   }
 
-  async handleCommand(command: TeamCommand): Promise<string> {
+  async handleCommand(
+    command: TeamCommand,
+    context: { userId: string }
+  ): Promise<string> {
     switch (command.type) {
       case "create": {
         if (!command.name || !command.description) {
@@ -190,14 +193,15 @@ export class TeamCommands {
           .join("\n");
       }
 
-      case "askStandupAgent": {
-        const client = new A2AClient("http://localhost:3000/a2a");
-        const card = await client.agentCard();
-        if (!card) {
-          return "Standup agent not available";
-        }
-        const prompt = new ChatPrompt({
-          instructions: `You are an agent who can message the standup agent for some questions. 
+      case "askStandupAgent":
+        {
+          const client = new A2AClient("http://localhost:3000/a2a");
+          const card = await client.agentCard();
+          if (!card) {
+            return "Standup agent not available";
+          }
+          const prompt = new ChatPrompt({
+            instructions: `You are an agent who can message the standup agent for some questions. 
 Here are the details about the team:
 ${JSON.stringify(command.teamDetails)}.
 
@@ -206,6 +210,74 @@ Take a look at the various skills the standup agent has:
 ${JSON.stringify(card.skills)}
 
 Your job is to construct a question to ask the standup agent. Return the question only.
+`,
+            model: new OpenAIChatModel({
+              apiKey: process.env.AZURE_OPENAI_API_KEY!,
+              endpoint: process.env.AZURE_OPENAI_ENDPOINT!,
+              apiVersion: process.env.AZURE_OPENAI_API_VERSION!,
+              model: process.env.AZURE_OPENAI_MODEL_DEPLOYMENT_NAME!,
+            }),
+          });
+
+          const question = await prompt.send(command.question);
+          if (!question.content) {
+            return "Failed to get a question from the standup agent";
+          }
+          console.log("Question to ask:", question.content);
+          try {
+            const taskId = Math.random().toString(36).substring(2, 15);
+            const sendParams: TaskSendParams = {
+              id: taskId,
+              message: { role: "user", parts: [{ text: question.content }] },
+              metadata: {
+                tenantId: command.teamDetails.tenantId,
+                userId: context.userId,
+              },
+            };
+            // Method now returns Task | null directly
+            const taskResult: Task | null = await client.sendTask(sendParams);
+            console.log("Send Task Result:", taskResult);
+            if (taskResult?.status.state === "completed") {
+              console.log("Task completed:", taskResult);
+              return (
+                taskResult.artifacts
+                  ?.flatMap((a) => a.parts)
+                  ?.map((p) => {
+                    if ("text" in p) {
+                      return p.text;
+                    } else if ("data" in p) {
+                      return JSON.stringify(p.data);
+                    } else if ("file" in p) {
+                      // TODO
+                      return "Content was returned as a file, but not readable";
+                    }
+                  })
+                  .join("\n") ?? "Task completed"
+              );
+            } else {
+              console.log("Task not completed:", taskResult);
+            }
+          } catch (e) {
+            console.error("A2A Client Error:", e);
+            return `There was an error getting parking lot items from the standup agent: ${e}`;
+          }
+        }
+        break;
+      case "askSupportAgent": {
+        const client = new A2AClient("http://localhost:8000/a2a");
+        const card = await client.agentCard();
+        if (!card) {
+          return "Support agent not available";
+        }
+        const prompt = new ChatPrompt({
+          instructions: `You are an agent who can message the support agent for GitHub issue management. 
+Here are the details about the team:
+${JSON.stringify(command.teamDetails)}.
+
+Take a look at the various skills the support agent has:
+${JSON.stringify(card.skills)}
+
+Your job is to construct a question to ask the support agent. Return the question only.
 `,
           model: new OpenAIChatModel({
             apiKey: process.env.AZURE_OPENAI_API_KEY!,
@@ -217,7 +289,7 @@ Your job is to construct a question to ask the standup agent. Return the questio
 
         const question = await prompt.send(command.question);
         if (!question.content) {
-          return "Failed to get a question from the standup agent";
+          return "Failed to get a question from the support agent";
         }
         console.log("Question to ask:", question.content);
         try {
@@ -226,16 +298,20 @@ Your job is to construct a question to ask the standup agent. Return the questio
             id: taskId,
             message: { role: "user", parts: [{ text: question.content }] },
             metadata: {
-              tenantId: command.teamDetails.tenantId,
+              conversationId: command.conversationId,
+              userId: command.userId,
             },
           };
-          // Method now returns Task | null directly
           const taskResult: Task | null = await client.sendTask(sendParams);
           console.log("Send Task Result:", taskResult);
           if (taskResult?.status.state === "completed") {
             console.log("Task completed:", taskResult);
-            return (
-              taskResult.artifacts
+            return JSON.stringify({
+              message:
+                taskResult.status.message?.parts
+                  .map((p) => ("text" in p ? p.text : ""))
+                  ?.join("\n") ?? "Task completed",
+              rawResult: taskResult.artifacts
                 ?.flatMap((a) => a.parts)
                 ?.map((p) => {
                   if ("text" in p) {
@@ -243,18 +319,17 @@ Your job is to construct a question to ask the standup agent. Return the questio
                   } else if ("data" in p) {
                     return JSON.stringify(p.data);
                   } else if ("file" in p) {
-                    // TODO
                     return "Content was returned as a file, but not readable";
                   }
                 })
-                .join("\n") ?? "Task completed"
-            );
+                .join("\n"),
+            });
           } else {
             console.log("Task not completed:", taskResult);
           }
         } catch (e) {
           console.error("A2A Client Error:", e);
-          return `There was an error getting parking lot items from the standup agent: ${e}`;
+          return `There was an error communicating with the support agent: ${e}`;
         }
       }
     }

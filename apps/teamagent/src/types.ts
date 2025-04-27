@@ -45,6 +45,14 @@ export type TeamCommand =
       type: "askStandupAgent";
       teamDetails: Team;
       question: string;
+      userId: string;
+    }
+  | {
+      type: "askSupportAgent";
+      teamDetails: Team;
+      question: string;
+      userId: string;
+      conversationId: string;
     };
 
 export interface Storage<T> {

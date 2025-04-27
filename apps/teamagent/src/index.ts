@@ -11,6 +11,8 @@ const nlpHandler = new NLPHandler();
 app.on("message", async ({ send, activity }) => {
   await send({ type: "typing" });
 
+  console.log("Received message:", activity);
+
   try {
     const response = await nlpHandler.processMessage(activity.text, activity);
     await send(response);

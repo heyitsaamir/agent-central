@@ -4,6 +4,17 @@ import { TeamCommands } from "./commands";
 import { FileListStorage, MemoryConfig } from "./memory";
 import { Activity, TeamCommand, TeamContext } from "./types";
 
+const getConversationId = (context: { conversation: { id: string } }) => {
+  console.log("Conversation ID:", context.conversation.id);
+  if (context.conversation.id.includes("@thread.tacv2")) {
+    const initialPart = context.conversation.id.split("@thread.tacv2")[0];
+    console.log("Initial part:", initialPart);
+    return `${initialPart}@thread.tacv2`;
+  }
+  console.log("No thread ID found, returning original ID");
+  return context.conversation.id;
+};
+
 export class NLPHandler {
   private teamCommands: TeamCommands;
   private memories = new Map<string, FileListStorage>();
@@ -31,22 +42,27 @@ export class NLPHandler {
 
   private async initializeContext(activity: Activity): Promise<TeamContext> {
     const allTeams = await this.teamCommands.storage.getAll();
+    console.log("All teams:", allTeams);
+    const conversationId = getConversationId(activity);
 
-    return {
-      currentTeam: allTeams.find((t) =>
-        t.channelIds.includes(activity.conversation.id)
-      ),
+    const ctx = {
+      currentTeam: allTeams.find((t) => t.channelIds.includes(conversationId)),
       memberTeams: allTeams.filter((t) =>
         t.members.some((m) => m.id === activity.from.id)
       ),
-      channelId: activity.conversation.id,
+      channelId: conversationId,
       userId: activity.from.id,
       tenantId: activity.conversation.tenantId ?? "unknown",
     };
+
+    console.log("Context initialized:", ctx);
+    return ctx;
   }
 
   private async initializePrompt(context: TeamContext, activity: Activity) {
-    const memory = this.getMemory(activity.conversation.id);
+    const conversationId = getConversationId(activity);
+    const memory = this.getMemory(conversationId);
+    const commandContext = { userId: context.userId };
 
     const prompt = new ChatPrompt({
       instructions:
@@ -88,10 +104,10 @@ export class NLPHandler {
           type: "create",
           name: params.name,
           description: params.description,
-          channelId: activity.conversation.id,
+          channelId: conversationId,
           tenantId: activity.conversation.tenantId ?? "unknown",
         };
-        return this.teamCommands.handleCommand(cmd);
+        return this.teamCommands.handleCommand(cmd, commandContext);
       }
     );
 
@@ -108,6 +124,7 @@ export class NLPHandler {
           required: ["name"],
         },
         async (params: { name: string }) => {
+          console.log("Adding member:", params.name);
           const mentions =
             activity.entities?.filter((e) => e.type === "mention") || [];
 
@@ -120,7 +137,7 @@ export class NLPHandler {
                     teamId: context.currentTeam!.id,
                     name: mention.mentioned.name,
                   };
-                  return this.teamCommands.handleCommand(cmd);
+                  return this.teamCommands.handleCommand(cmd, commandContext);
                 }
                 return null;
               })
@@ -132,7 +149,7 @@ export class NLPHandler {
               teamId: context.currentTeam!.id,
               name: params.name,
             };
-            return this.teamCommands.handleCommand(cmd);
+            return this.teamCommands.handleCommand(cmd, commandContext);
           }
         }
       );
@@ -151,7 +168,7 @@ export class NLPHandler {
             userId: activity.from.id,
             name: activity.from.name,
           };
-          return this.teamCommands.handleCommand(cmd);
+          return this.teamCommands.handleCommand(cmd, commandContext);
         }
       );
 
@@ -167,7 +184,7 @@ export class NLPHandler {
             type: "listMembers",
             teamId: context.currentTeam!.id,
           };
-          return this.teamCommands.handleCommand(cmd);
+          return this.teamCommands.handleCommand(cmd, commandContext);
         }
       );
 
@@ -189,7 +206,7 @@ export class NLPHandler {
             key: params.key,
             value: params.value,
           };
-          return this.teamCommands.handleCommand(cmd);
+          return this.teamCommands.handleCommand(cmd, commandContext);
         }
       );
 
@@ -201,7 +218,7 @@ export class NLPHandler {
             type: "getDetail",
             teamId: context.currentTeam!.id,
           };
-          return this.teamCommands.handleCommand(cmd);
+          return this.teamCommands.handleCommand(cmd, commandContext);
         }
       );
     }
@@ -218,7 +235,7 @@ export class NLPHandler {
           type: "listMyTeams",
           userId: context.userId,
         };
-        return this.teamCommands.handleCommand(cmd);
+        return this.teamCommands.handleCommand(cmd, commandContext);
       }
     );
 
@@ -240,8 +257,48 @@ export class NLPHandler {
           type: "askStandupAgent",
           teamDetails: context.currentTeam!,
           question: params.question,
+          userId: context.userId,
         };
-        return this.teamCommands.handleCommand(cmd);
+        return this.teamCommands.handleCommand(cmd, commandContext);
+      }
+    );
+
+    prompt.function(
+      "askSupportAgent",
+      "Ask the support agent about GitHub issues",
+      {
+        type: "object",
+        properties: {
+          question: {
+            type: "string",
+            description:
+              "The question to ask the support agent about GitHub issues",
+          },
+          conversationId: {
+            type: "string",
+            description:
+              "The conversation ID where the support agent is active for this team",
+          },
+        },
+        required: ["question", "conversationId"],
+      },
+      async (params: { question: string; conversationId: string }) => {
+        const cmd: TeamCommand = {
+          type: "askSupportAgent",
+          teamDetails: context.currentTeam!,
+          question: params.question,
+          userId: context.userId,
+          conversationId: params.conversationId,
+        };
+        return this.teamCommands.handleCommand(cmd, context);
+      }
+    );
+
+    prompt.function(
+      "validateRelease",
+      "Validate if we are ready to release",
+      async () => {
+        return `To check if we are ready to release, we must as the support agent if there are any major ongoing issues. After we get the response, make sure you attribute that you got this information from the support agent.`;
       }
     );
 
