@@ -33,6 +33,7 @@ const supportHandler = new SupportHandler();
 const configHandler = new ConfigHandler();
 
 app.on("message", async ({ send, activity }) => {
+  console.log("Received message:", activity);
   await send({ type: "typing" });
 
   try {

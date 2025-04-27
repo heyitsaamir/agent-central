@@ -60,10 +60,8 @@ export class ConfigHandler {
       return {
         responseType: "config",
         config: {
-          task: {
-            type: "message",
-            value: "GitHub repository and token are required.",
-          },
+          type: "message",
+          value: "GitHub repository and token are required.",
         },
       };
     }
@@ -75,10 +73,8 @@ export class ConfigHandler {
       return {
         responseType: "config",
         config: {
-          task: {
-            type: "message",
-            value: "Configuration saved successfully.",
-          },
+          type: "message",
+          value: "Configuration saved successfully.",
         },
       };
     } catch (error) {
@@ -86,10 +82,8 @@ export class ConfigHandler {
       return {
         responseType: "config",
         config: {
-          task: {
-            type: "message",
-            value: "Failed to save configuration. Please try again.",
-          },
+          type: "message",
+          value: "Failed to save configuration. Please try again.",
         },
       };
     }

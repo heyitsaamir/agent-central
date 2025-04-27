@@ -4,6 +4,14 @@ import { SupportCommands } from "./commands";
 import { FileConfigStorage } from "./config/storage";
 import { SupportResponse } from "./types";
 
+const getConversationId = (context: { conversation: { id: string } }) => {
+  if (context.conversation.id.includes("@thread.tacv2")) {
+    const initialPart = context.conversation.id.split("@thread.tacv2")[0];
+    return `${initialPart}@thread.tacv2`;
+  }
+  return context.conversation.id;
+};
+
 export class SupportHandler {
   private configStorage: FileConfigStorage;
 
@@ -16,7 +24,9 @@ export class SupportHandler {
     context: { conversation: { id: string } }
   ): Promise<SupportResponse> {
     try {
-      const config = await this.configStorage.get(context.conversation.id);
+      // If the converstaion id ends in messageid=<>, remove it. We only care about it till @thread.tacv2
+      const conversationId = getConversationId(context);
+      const config = await this.configStorage.get(conversationId);
       if (!config) {
         return {
           content:
@@ -43,22 +53,23 @@ or when no matching issues are found and the user's message clearly describes a 
       prompt.function(
         "searchIssues",
         "Search for GitHub issues",
-        {
-          type: "object",
-          properties: {
-            query: {
-              type: "string",
-              description: "Search query for issues",
-            },
-            priority: {
-              type: "string",
-              enum: ["low priority", "high priority"],
-              description: "Priority of the issues that need to be searched",
-            },
-          },
-          required: [],
-        },
+        // {
+        //   type: "object",
+        //   properties: {
+        //     query: {
+        //       type: "string",
+        //       description: "Keywords to search for in GitHub issues",
+        //     },
+        //     priority: {
+        //       type: "string",
+        //       enum: ["low priority", "high priority"],
+        //       description: "Priority of the issues that need to be searched",
+        //     },
+        //   },
+        //   required: [],
+        // },
         async (params: { query: string }) => {
+          console.log("Searching for issues with query:", params.query);
           const result = await supportCommands.handleCommand({
             type: "searchIssues",
             query: params.query,
