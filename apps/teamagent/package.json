@@ -17,12 +17,12 @@
   },
   "dependencies": {
     "@microsoft/teams.ai": "^0.2.6",
-    "@microsoft/teams.api": "latest",
-    "@microsoft/teams.apps": "latest",
-    "@microsoft/teams.cards": "latest",
-    "@microsoft/teams.common": "latest",
-    "@microsoft/teams.dev": "latest",
-    "@microsoft/teams.graph": "latest",
+    "@microsoft/teams.api": "0.2.12",
+    "@microsoft/teams.apps": "0.2.12",
+    "@microsoft/teams.cards": "0.2.12",
+    "@microsoft/teams.common": "0.2.12",
+    "@microsoft/teams.dev": "0.2.12",
+    "@microsoft/teams.graph": "0.2.12",
     "@microsoft/teams.openai": "^0.2.6",
     "@types/uuid": "^10.0.0",
     "uuid": "^11.1.0"
