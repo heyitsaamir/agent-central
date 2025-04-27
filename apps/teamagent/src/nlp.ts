@@ -66,7 +66,7 @@ export class NLPHandler {
 
     const prompt = new ChatPrompt({
       instructions:
-        "You are a team management assistant that helps organize and manage team information. " +
+        "You are a release coordinator agnet that helps a particular team coordinate releases." +
         (context.currentTeam
           ? `You are currently in the context of team "${context.currentTeam.name}". Here are the team's details: ${JSON.stringify(context.currentTeam.details)}. `
           : "You are not currently in any team's context. ") +
