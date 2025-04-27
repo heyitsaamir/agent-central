@@ -1,5 +1,6 @@
 import { App, HttpPlugin } from "@microsoft/teams.apps";
 import { A2AServer, schema } from "a2aserver";
+import pkg from "../package.json";
 import { parkingLotAgentLogic } from "./a2a/handlers/parking";
 import { handleCardAction } from "./handlers/cardActions";
 import { handleDialogOpen, handleDialogSubmit } from "./handlers/dialog";
@@ -16,6 +17,9 @@ const app = new App({
 app.on(
   "message",
   async ({ send, activity, isSignedIn, signin, signout, api }) => {
+    console.log(
+      `Handling message using teams app version ${pkg.dependencies["@microsoft/teams.apps"]}`
+    );
     console.log("Received message:", activity);
     const standup = await ensureStandupInitialized();
     if (standup.type === "error") {
