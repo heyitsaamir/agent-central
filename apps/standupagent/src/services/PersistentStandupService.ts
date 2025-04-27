@@ -6,13 +6,17 @@ import {
   IStorage,
   StandupSummary,
 } from "./CosmosStorage";
+import { FileStorageFactory } from "./FileStorage";
 import { InMemoryStorageFactory } from "./InMemoryStorage";
 import { IStandupStorage, NoStorage } from "./Storage";
 
 const useLocalStorage = process.env.USE_LOCAL_STORAGE === "true";
+const useFileStorage = process.env.USE_FILE_STORAGE === "true";
 
 if (useLocalStorage) {
   console.warn("Using in-memory storage. This is not suitable for production.");
+} else if (useFileStorage) {
+  console.warn("Using file storage. This is not suitable for production.");
 }
 
 export class PersistentStandupService {
@@ -36,10 +40,15 @@ export class PersistentStandupService {
   }
 
   async initialize(connectionString: string) {
-    let factory: typeof CosmosStorageFactory | typeof InMemoryStorageFactory =
-      CosmosStorageFactory;
+    let factory:
+      | typeof CosmosStorageFactory
+      | typeof InMemoryStorageFactory
+      | typeof FileStorageFactory = CosmosStorageFactory;
     if (useLocalStorage) {
       factory = InMemoryStorageFactory;
+    } else if (useFileStorage) {
+      factory = FileStorageFactory;
+      factory.initialize();
     } else {
       // Initialize the CosmosDB client
       factory.initialize(connectionString);
