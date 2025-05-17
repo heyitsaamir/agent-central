@@ -121,17 +121,18 @@ export class StandupGroup {
   }
 
   async addParkingLotItem(
-    userId: string,
+    userId: string | null,
     parkingLot: string
   ): Promise<boolean> {
+    const userIdAddingParkingLot = userId || "";
     const existingResponse = this.activeResponses.find(
-      (r) => r.userId === userId
+      (r) => r.userId === userIdAddingParkingLot
     );
     if (existingResponse) {
       existingResponse.parkingLot += `\n${parkingLot}`;
     } else {
       this.activeResponses.push({
-        userId,
+        userId: userIdAddingParkingLot,
         parkingLot,
         timestamp: new Date(),
         completedWork: "",
@@ -139,6 +140,22 @@ export class StandupGroup {
       });
     }
     return true;
+  }
+
+  async clearParkingLot(
+    userId: string | null
+  ): Promise<Result<StandupResponse[]>> {
+    console.log(`Clearing parking lot items as requested by user: ${userId}`);
+    // If there is a standup in progress, we can't
+    if (this.isActive) {
+      return {
+        type: "error",
+        message: "There is an active standup in progress. Cannot clear parking lot right now",
+      };
+    }
+    const clearedOutItems = this.activeResponses.slice();
+    this.activeResponses = [];
+    return { type: 'success', data: clearedOutItems, message: `Parking lot cleared (Removed ${clearedOutItems.length} items)` };
   }
 
   async closeStandup(

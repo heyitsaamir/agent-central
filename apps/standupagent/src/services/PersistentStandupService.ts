@@ -27,7 +27,7 @@ export class PersistentStandupService {
     private databaseName: string = "StandupDB",
     private groupContainer: string = "StandupGroups",
     private historyContainer: string = "StandupHistory"
-  ) {}
+  ) { }
 
   private getStorageKey(group: StandupGroup): {
     id: string;
@@ -74,6 +74,7 @@ export class PersistentStandupService {
   ): Promise<StandupGroup | null> {
     // Use provided tenantId for lookup
     const key = { id: conversationId, tenantId };
+    console.log("Loading group with key:", key);
     const data = await this.groupStorage.get(key.id, key.tenantId);
     if (!data) return null;
 

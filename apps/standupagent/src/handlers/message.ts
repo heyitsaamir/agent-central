@@ -41,7 +41,7 @@ export async function handleMessage(
   // Initialize ChatPrompt once for natural language commands
   const nlpPrompt = new ChatPrompt({
     instructions:
-      "You are a standup bot assistant that understands natural language commands. Use the tools available to you to figure out what the user wants to do.",
+      "You are a Standup Agent assistant that understands natural language commands. Use the tools available to you to figure out what the user wants to do.",
     model: new OpenAIChatModel({
       apiKey: process.env.AZURE_OPENAI_API_KEY,
       endpoint: process.env.AZURE_OPENAI_ENDPOINT,
@@ -131,8 +131,7 @@ export async function handleMessage(
       if (!enable && !disable) {
         const currentSetting = await group.getSaveHistory();
         await partialContext.send(
-          `History saving is currently ${
-            currentSetting ? "enabled" : "disabled"
+          `History saving is currently ${currentSetting ? "enabled" : "disabled"
           }. Use "!history on" or "!history off" to change.`
         );
         return;
@@ -328,10 +327,29 @@ export async function handleMessage(
 
         const currentSetting = await group.getSaveHistory();
         await partialContext.send(
-          `History saving is currently ${
-            currentSetting ? "enabled" : "disabled"
+          `History saving is currently ${currentSetting ? "enabled" : "disabled"
           }. You can change this with "enable history" or "disable history".`
         );
+      }
+    );
+
+    nlpPrompt.function(
+      "clearParkingLot",
+      "Clear all items from the parking lot",
+      async () => {
+        console.log("Clearing parking lot items");
+        const group = await standup.validateGroup(
+          context.conversationId,
+          context.tenantId
+        );
+        if (!group) {
+          await partialContext.send(
+            "No standup group registered. Use !register <onenote-link> to create one."
+          );
+          return;
+        }
+        const clearedItems = await group.clearParkingLot(context.userId);
+        return clearedItems.message;
       }
     );
 

@@ -1,9 +1,11 @@
 import {
-  Card,
-  Element,
+  AdaptiveCard,
+  CardElementArray,
   ExecuteAction,
-  ICard,
+  IActionSet,
+  IAdaptiveCard,
   ITextBlock,
+  ITextInput,
   SubmitAction,
   TaskFetchAction,
   TaskFetchData,
@@ -43,7 +45,7 @@ export function createStandupSummaryCard(
     plannedWork: string;
     parkingLot?: string;
   }>
-): ICard {
+): IAdaptiveCard {
   const date = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -58,7 +60,7 @@ export function createStandupSummaryCard(
     )
     .join("\n");
 
-  const card: ICard = {
+  const card: IAdaptiveCard = {
     type: "AdaptiveCard",
     $schema: "https://adaptivecards.io/schemas/adaptive-card.json",
     version: "1.5",
@@ -91,7 +93,7 @@ export function createStandupSummaryCard(
           },
         ],
       },
-      ...responses.flatMap((response): Element[] => [
+      ...responses.flatMap((response): CardElementArray => [
         {
           type: "TextBlock" as const,
           text: `**${response.userName}**`,
@@ -170,19 +172,19 @@ export function createStandupSummaryCard(
       ]),
       ...(parkingLotItems.length > 0
         ? [
-            {
-              type: "TextBlock" as const,
-              text: "Parking Lot",
-              wrap: true,
-              style: "heading",
-              separator: true,
-            } satisfies ITextBlock,
-            {
-              type: "TextBlock" as const,
-              text: parkingLotItems,
-              wrap: true,
-            } satisfies ITextBlock,
-          ]
+          {
+            type: "TextBlock" as const,
+            text: "Parking Lot",
+            wrap: true,
+            style: "heading",
+            separator: true,
+          } satisfies ITextBlock,
+          {
+            type: "TextBlock" as const,
+            text: parkingLotItems,
+            wrap: true,
+          } satisfies ITextBlock,
+        ]
         : []),
     ],
   };
@@ -193,7 +195,7 @@ export function createStandupSummaryCard(
 export function createStandupCard(
   completedResponses: string[] = [],
   previousParkingLot?: string[]
-): ICard {
+): IAdaptiveCard {
   const previousParkingLotItems = previousParkingLot
     ?.flatMap((p) => p.split("\n").map((p) => p.trim()))
     ?.filter((p) => p.trim() !== "")
@@ -206,8 +208,8 @@ export function createStandupCard(
       {
         type: "TextBlock" as const,
         text: "Standup Session",
-        size: "large",
-        weight: "bolder",
+        size: "Large",
+        weight: "Bolder",
       },
       {
         type: "TextBlock" as const,
@@ -216,50 +218,50 @@ export function createStandupCard(
       },
       ...(completedResponses.length > 0
         ? [
-            {
-              type: "TextBlock" as const,
-              text: `Completed responses: ${completedResponses.join(", ")}`,
-              wrap: true,
-              spacing: "medium" as const,
-            },
-          ]
+          {
+            type: "TextBlock" as const,
+            text: `Completed responses: ${completedResponses.join(", ")}`,
+            wrap: true,
+            spacing: "Medium" as const,
+          },
+        ]
         : []),
       ...(previousParkingLotItems && previousParkingLotItems.length > 0
         ? [
-            {
-              type: "TextBlock" as const,
-              text: "Discussed Previous Parking Lot Items:",
-              wrap: true,
-              spacing: "medium" as const,
-            },
-            {
-              type: "TextBlock" as const,
-              text: "Uncheck the values that still need discussion",
-              wrap: true,
-              size: "small" as const,
-              weight: "lighter",
-              isSubtle: true,
-              spacing: "none" as const,
-            } satisfies ITextBlock,
-            ...previousParkingLotItems.map(
-              (item, index) =>
-                new ToggleInput(item, {
-                  id: `parking_lot_${index}`,
-                  value: `Discussed - ${item}`,
-                  valueOff: `Not Discussed - ${item}`,
-                  valueOn: `Discussed - ${item}`,
-                  wrap: true,
-                  spacing: "none" as const,
-                })
-            ),
-          ]
+          {
+            type: "TextBlock" as const,
+            text: "Discussed Previous Parking Lot Items:",
+            wrap: true,
+            spacing: "Medium" as const,
+          },
+          {
+            type: "TextBlock",
+            text: "Uncheck the values that still need discussion",
+            wrap: true,
+            size: "Small",
+            weight: "Lighter",
+            isSubtle: true,
+            spacing: "None",
+          } satisfies ITextBlock,
+          ...previousParkingLotItems.map(
+            (item, index) =>
+              new ToggleInput(item, {
+                id: `parking_lot_${index}`,
+                value: `Discussed - ${item}`,
+                valueOff: `Not Discussed - ${item}`,
+                valueOn: `Discussed - ${item}`,
+                wrap: true,
+                spacing: "None" as const,
+              })
+          ),
+        ]
         : []),
       {
         type: "ActionSet",
         actions: [
           new TaskFetchAction({})
             .withTitle("Fill out your status")
-            .withData(new TaskFetchData("standup_input"))
+            .withData(new TaskFetchData({ actionType: "standup_input" }))
             .withStyle("positive"),
           new ExecuteAction({
             title: "Close standup",
@@ -278,7 +280,7 @@ export function createStandupCard(
 export function createPageSelectionCard(
   pages: { id: string; title: string }[],
   sourceConversationId: string
-): ICard {
+): IAdaptiveCard {
   return {
     type: "AdaptiveCard",
     $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
@@ -287,8 +289,8 @@ export function createPageSelectionCard(
       {
         type: "TextBlock" as const,
         text: "Select OneNote Page for Standup",
-        size: "large",
-        weight: "bolder",
+        size: "Large",
+        weight: "Bolder",
       },
       {
         type: "TextBlock" as const,
@@ -321,9 +323,9 @@ export function createPageSelectionCard(
 }
 
 export function createParkingLotCard(
-  items: Array<{ item: string; userName: string }>
-): ICard {
-  return new Card().withBody(
+  items: Array<{ item: string; userName: string | null }>
+): IAdaptiveCard {
+  return new AdaptiveCard().withBody(
     {
       type: "ColumnSet",
       columns: [
@@ -343,35 +345,40 @@ export function createParkingLotCard(
     },
     ...(items.length === 0
       ? [
-          {
-            type: "TextBlock" as const,
-            text: "_No parking lot items have been added yet._",
-            wrap: true,
-            isSubtle: true,
-          },
-        ]
+        {
+          type: "TextBlock" as const,
+          text: "_No parking lot items have been added yet._",
+          wrap: true,
+          isSubtle: true,
+        },
+      ]
       : items.map(({ item, userName }) => {
-          let itemText: string;
-          if (item.includes(SPECIAL_STRINGS.addedByPrefix)) {
-            itemText = `- ${item}`;
-          }
+        let itemText: string;
+        if (item.includes(SPECIAL_STRINGS.addedByPrefix)) {
+          itemText = item;
+        }
 
-          itemText = `- ${item} (added by ${userName})`;
+        if (userName == null) {
+          itemText = item;
+        } else {
+          itemText = `${item} (added by ${userName})`;
+        }
 
-          return {
-            type: "TextBlock" as const,
-            text: itemText,
-            wrap: true,
-            spacing: "small" as const,
-          };
-        }))
+        return {
+          type: "TextBlock" as const,
+          text: itemText,
+          wrap: true,
+          spacing: "Small" as const,
+          "separator": true
+        } satisfies ITextBlock;
+      }))
   );
 }
 
 export function createTaskModule(
   user: User,
   existingResponse?: StandupResponse
-): ICard {
+): IAdaptiveCard {
   return {
     type: "AdaptiveCard",
     $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
@@ -380,50 +387,50 @@ export function createTaskModule(
       {
         type: "TextBlock" as const,
         text: `${user.name}'s Standup Update`,
-        size: "large",
-        weight: "bolder",
-      },
+        size: "Large",
+        weight: "Bolder",
+      } satisfies ITextBlock,
       {
         type: "TextBlock" as const,
         text: "What did you do since last standup?",
         wrap: true,
-      },
+      } satisfies ITextBlock,
       {
         type: "Input.Text",
         id: "completedWork",
         placeholder: "Enter your completed tasks and progress...",
         isMultiline: true,
         isRequired: true,
-        style: "text",
+        style: "Text",
         value: existingResponse?.completedWork,
-      },
+      } satisfies ITextInput,
       {
         type: "TextBlock" as const,
         text: "What do you plan to do today?",
         wrap: true,
-      },
+      } satisfies ITextBlock,
       {
         type: "Input.Text",
         id: "plannedWork",
         placeholder: "Enter your planned tasks for today...",
         isMultiline: true,
         isRequired: true,
-        style: "text",
+        style: "Text",
         value: existingResponse?.plannedWork,
-      },
+      } satisfies ITextInput,
       {
         type: "TextBlock" as const,
         text: "Parking Lot",
         wrap: true,
-      },
+      } satisfies ITextBlock,
       {
         type: "Input.Text",
         id: "parkingLot",
         placeholder: "Anything you want to discuss as a team?",
         isMultiline: true,
-        style: "text",
+        style: "Text",
         value: existingResponse?.parkingLot,
-      },
+      } satisfies ITextInput,
       {
         type: "ActionSet",
         actions: [
@@ -434,7 +441,7 @@ export function createTaskModule(
             userId: user.id,
           }),
         ],
-      },
+      } satisfies IActionSet,
     ],
   };
 }
@@ -450,7 +457,7 @@ export function createHistoricalStandupsCard(
       parkingLot?: string;
     }>;
   }>
-): ICard {
+): IAdaptiveCard {
   return {
     type: "AdaptiveCard",
     $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
@@ -459,9 +466,9 @@ export function createHistoricalStandupsCard(
       {
         type: "TextBlock" as const,
         text: "Historical Standups",
-        size: "large",
-        weight: "bolder",
-      },
+        size: "Large",
+        weight: "Bolder",
+      } satisfies ITextBlock,
       ...histories.flatMap((history) => [
         {
           type: "Container" as const,
@@ -476,22 +483,22 @@ export function createHistoricalStandupsCard(
               }),
               wrap: true,
               style: "heading" as const,
-            },
+            } satisfies ITextBlock,
             ...(history.groupName
               ? [
-                  {
-                    type: "TextBlock" as const,
-                    text: `Group: ${history.groupName}`,
-                    wrap: true,
-                    size: "small" as const,
-                  },
-                ]
+                {
+                  type: "TextBlock" as const,
+                  text: `Group: ${history.groupName}`,
+                  wrap: true,
+                  size: "Small" as const,
+                } satisfies ITextBlock,
+              ]
               : []),
           ],
         },
         ...history.responses
           .filter((r) => r.completedWork || r.plannedWork)
-          .flatMap((response): Element[] => [
+          .flatMap((response): CardElementArray => [
             {
               type: "TextBlock" as const,
               text: `**${response.userName}**`,
@@ -502,11 +509,9 @@ export function createHistoricalStandupsCard(
               type: "Table",
               columns: [
                 {
-                  type: "Column",
                   width: 2,
                 },
                 {
-                  type: "Column",
                   width: 6,
                 },
               ],
@@ -566,7 +571,7 @@ export function createHistoricalStandupsCard(
                   ],
                 },
               ],
-            } as any,
+            },
             // Skipping parking lot items for now
             // ...(response.parkingLot
             //   ? [
