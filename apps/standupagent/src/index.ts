@@ -1,6 +1,7 @@
+import { A2APlugin } from "@microsoft/teams.a2a";
 import { App, HttpPlugin } from "@microsoft/teams.apps";
-import { A2AServer, schema } from "a2aserver";
 import pkg from "../package.json";
+import { buildStandupAgentCard } from "./a2a/agentCard";
 import { parkingLotAgentLogic } from "./a2a/handlers/parking";
 import { handleCardAction } from "./handlers/cardActions";
 import { handleDialogOpen, handleDialogSubmit } from "./handlers/dialog";
@@ -9,8 +10,13 @@ import { ensureStandupInitialized } from "./utils/initializeStandup";
 
 const httpPlugin = new HttpPlugin();
 
+const PORT = +(process.env.PORT || 3000);
+const hostName = process.env.WEBSITE_HOSTNAME || `localhost:${PORT}`;
+
 const app = new App({
-  plugins: [httpPlugin],
+  plugins: [httpPlugin, new A2APlugin({
+    agentCard: buildStandupAgentCard(hostName),
+  })],
 });
 
 // Handle incoming messages
@@ -87,7 +93,7 @@ app.on("card.action", async ({ activity, send, api }) => {
 
 // Handle installation
 app.on("install.add", async ({ send }) => {
-  await send("Yo yo whassap? I'm a standup bot. I help you conduct standups.");
+  await send("Hello! I am a Standup Agent. I can help you manage your standups.");
 });
 
 // Handle sign in
@@ -95,59 +101,12 @@ app.event("signin", async ({ send }) => {
   await send("You are signed in!");
 });
 
-const parkingLotCard: schema.AgentCard = {
-  name: "Standup Parking Lot",
-  description: "An agent that manages parking lot items for team standups.",
-  url: "http://localhost:3000/a2a",
-  provider: {
-    organization: "Standup Bot",
-  },
-  version: "0.0.1",
-  capabilities: {
-    streaming: false,
-    pushNotifications: false,
-    stateTransitionHistory: false,
-  },
-  authentication: null,
-  defaultInputModes: ["text"],
-  defaultOutputModes: ["text"],
-  skills: [
-    {
-      id: "add_parking_lot",
-      name: "Add to Parking Lot",
-      description: "Add a new item to the parking lot for discussion.",
-      tags: ["parking-lot", "add"],
-      examples: [
-        "Add 'API changes discussion' to the parking lot for conversation id 123@thread.v2",
-        "I need to discuss deployment workflow in the next standup for conversation id 123@thread.v2",
-        "Add monitoring setup to parking lot for conversation id 123@thread.v2",
-      ],
-    },
-    {
-      id: "get_parking_lot",
-      name: "Get Parking Lot Items",
-      description:
-        "Retrieve all current parking lot items for a given conversation id",
-      tags: ["parking-lot", "list"],
-      examples: [
-        "Show me the parking lot items for conversation id 123@thread.v2",
-        "What's in the parking lot for conversation id 123@thread.v2?",
-        "List all items in parking lot for conversation id 12@thread.v2",
-      ],
-    },
-  ],
-};
-
-const a2aServer = new A2AServer(
-  parkingLotAgentLogic,
-  (httpPlugin as any).express,
-  {
-    card: parkingLotCard,
-    basePath: "/a2a",
-  }
-);
+app.event('a2a:message', async ({ respond, taskContext }) => {
+  const result = await parkingLotAgentLogic(taskContext);
+  await respond
+});
 
 (async () => {
-  await a2aServer.start();
-  await app.start(+(process.env.PORT || 3000));
+  await app.start(PORT);
 })();
+

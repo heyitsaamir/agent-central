@@ -1,6 +1,6 @@
+import { schema, TaskContext, TaskUpdate } from "@microsoft/teams.a2a";
 import { ChatPrompt } from "@microsoft/teams.ai";
 import { OpenAIChatModel } from "@microsoft/teams.openai";
-import { type schema, TaskContext, TaskYieldUpdate } from "a2aserver";
 import { ensureStandupInitialized } from "../../utils/initializeStandup";
 
 type Part = schema.Part;
@@ -10,9 +10,9 @@ const isTextPart = (part: Part): part is TextPart => {
   return part.type === "text" || "text" in part;
 };
 
-export async function* parkingLotAgentLogic(
+export async function parkingLotAgentLogic(
   context: TaskContext
-): AsyncGenerator<TaskYieldUpdate> {
+): Promise<TaskUpdate | string> {
   try {
     const textPart = context.userMessage.parts[0];
     if (!isTextPart(textPart)) {
@@ -24,18 +24,18 @@ export async function* parkingLotAgentLogic(
     console.log("Handling parking lot command:", text);
     if (standup.type === "error") {
       console.error("Standup not initialized:", standup.message);
-      yield {
+      return {
         state: "failed",
         message: {
           role: "agent",
           parts: [
             {
+              type: "text",
               text: "Standup not initialized.",
             },
           ],
         },
       };
-      return;
     }
 
     // Validate
@@ -46,18 +46,18 @@ export async function* parkingLotAgentLogic(
     ) {
       tenantId = context.task.metadata.tenantId;
     } else {
-      yield {
+      return {
         state: "failed",
         message: {
           role: "agent",
           parts: [
             {
+              type: 'text',
               text: "Tenant ID is missing in the metadata.",
             },
           ],
         },
       };
-      return;
     }
 
     let userId: string;
@@ -68,27 +68,19 @@ export async function* parkingLotAgentLogic(
       userId = context.task.metadata.userId;
     } else {
       console.error("User ID is missing in the metadata.");
-      yield {
+      return {
         state: "failed",
         message: {
           role: "agent",
           parts: [
             {
+              type: "text",
               text: "User ID is missing in the metadata.",
             },
           ],
         },
       };
-      return;
     }
-
-    yield {
-      state: "working",
-      message: {
-        role: "agent",
-        parts: [{ text: "Processing your request..." }],
-      },
-    };
 
     // Initialize ChatPrompt for natural language commands
     const nlpPrompt = new ChatPrompt({
@@ -183,7 +175,7 @@ export async function* parkingLotAgentLogic(
 
     console.log("NLP result:", result);
     console.log("Tool call:", toolCall);
-    yield {
+    return {
       name: toolCall,
       parts: [
         {
@@ -192,28 +184,16 @@ export async function* parkingLotAgentLogic(
         },
       ],
     };
-
-    yield {
-      state: "completed",
-      message: {
-        role: "agent",
-        parts: [
-          {
-            text: `Command processed successfully`,
-          },
-        ],
-      },
-    };
   } catch (error: unknown) {
-    yield {
+    return {
       state: "failed",
       message: {
         role: "agent",
         parts: [
           {
-            text: `Error processing request: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
+            type: "text",
+            text: `Error processing request: ${error instanceof Error ? error.message : "Unknown error"
+              }`,
           },
         ],
       },
