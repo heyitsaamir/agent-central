@@ -324,7 +324,7 @@ export class Standup {
     conversationId: string,
     tenantId: string
   ): Promise<
-    Result<{ parkingLotItems: Array<{ item: string; userName: string }> }>
+    Result<{ parkingLotItems: Array<{ item: string; userName: string | null }> }>
   > {
     const group = await this.validateGroup(conversationId, tenantId);
     if (!group) {
@@ -343,7 +343,7 @@ export class Standup {
         const user = users.find((u) => u.id === r.userId);
         return r.parkingLot!.split("\n").map((item) => ({
           item,
-          userName: user ? user.name : "Unknown",
+          userName: user ? user.name : null,
         }));
       });
 
@@ -351,6 +351,28 @@ export class Standup {
       type: "success",
       data: { parkingLotItems },
       message: "Parking lot items retrieved successfully",
+    };
+  }
+
+  async clearParkingLot(
+    conversationId: string,
+    tenantId: string,
+    userId: string | null,
+  ): Promise<Result<{ message: string }>> {
+    const group = await this.validateGroup(conversationId, tenantId);
+    if (!group) {
+      return {
+        type: "error",
+        message:
+          "No standup group registered. Use !register <onenote-link> to create one.",
+      };
+    }
+    const responses = await group.getActiveResponses();
+    await group.clearParkingLot(userId);
+    return {
+      type: "success",
+      data: { message: "Parking lot cleared successfully." },
+      message: "Parking lot cleared successfully.",
     };
   }
 

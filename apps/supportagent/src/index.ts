@@ -1,9 +1,10 @@
-import { App, HttpPlugin } from "@microsoft/teams.apps";
+import { A2APlugin } from "@microsoft/teams.a2a";
+import { App } from "@microsoft/teams.apps";
 import { DevtoolsPlugin } from "@microsoft/teams.dev";
-import { A2AServer } from "a2aserver";
 import * as dotenv from "dotenv";
-import { supportAgentCard, supportAgentLogic } from "./a2a/handlers/support";
+import { supportAgentCard, supportAgentLogic2 } from "./a2a/handlers/support";
 import { ConfigHandler } from "./config/handler";
+import { FileStorage } from "./fileStorage";
 import { SupportHandler } from "./handler";
 
 // Load environment variables from .env file
@@ -23,10 +24,14 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-const httpPlugin = new HttpPlugin();
-
 const app = new App({
-  plugins: [new DevtoolsPlugin(), httpPlugin],
+  plugins: [
+    new DevtoolsPlugin(),
+    new A2APlugin({
+      agentCard: supportAgentCard,
+    }),
+  ],
+  storage: new FileStorage()
 });
 
 const supportHandler = new SupportHandler();
@@ -58,17 +63,11 @@ app.on("config.submit", async ({ activity }) => {
   return configHandler.handleSubmit(activity);
 });
 
-const a2aServer = new A2AServer(
-  supportAgentLogic,
-  (httpPlugin as any).express,
-  {
-    card: supportAgentCard,
-    basePath: "/a2a",
-  }
-);
+app.event('a2a:message', async ({ taskContext, respond, accumulateArtifacts }) => {
+  const result = await supportAgentLogic2(taskContext, accumulateArtifacts);
+  await respond(result);
+});
 
 (async () => {
-  await a2aServer.start();
   await app.start(+(process.env.PORT || 8000));
-  console.log("Support agent is running with A2A capabilities!");
 })();

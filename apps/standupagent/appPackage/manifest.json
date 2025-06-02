@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "manifestVersion": "1.15",
   "id": "${{TEAMS_APP_ID}}",
-  "packageName": "com.package.standupagent",
+  "packageName": "com.package.statusagent",
   "name": {
-    "short": "Scrum Conductor",
-    "full": "Scrum Conductor"
+    "short": "Standup Agent",
+    "full": "Standup Agent"
   },
   "developer": {
     "name": "Microsoft",
@@ -16,8 +16,8 @@
     "termsOfUseUrl": "https://www.microsoft.com/legal/terms-of-use"
   },
   "description": {
-    "short": "Agent that helps you with Scrum",
-    "full": "Agent that helps you with Scrum"
+    "short": "Agent that helps you with Status Reporting Meetings",
+    "full": "Agent that helps you with  Status Reporting Meetings"
   },
   "icons": {
     "outline": "outline.png",

@@ -1,8 +1,11 @@
+import { A2AClientPlugin } from "@microsoft/teams.a2a";
 import { ChatPrompt } from "@microsoft/teams.ai";
 import { OpenAIChatModel } from "@microsoft/teams.openai";
 import { TeamCommands } from "./commands";
 import { FileListStorage, MemoryConfig } from "./memory";
 import { Activity, TeamCommand, TeamContext } from "./types";
+
+const a2aPrompt = new A2AClientPlugin()
 
 const getConversationId = (context: { conversation: { id: string } }) => {
   console.log("Conversation ID:", context.conversation.id);
@@ -68,12 +71,12 @@ export class NLPHandler {
       instructions:
         "You are a team management assistant that helps organize and manage team information. " +
         (context.currentTeam
-          ? `You are currently in the context of team "${context.currentTeam.name}". Here are the team's details: ${JSON.stringify(context.currentTeam.details)}. `
+          ? `You are currently in the context of team "${context.currentTeam.name}".`
           : "You are not currently in any team's context. ") +
         (context.memberTeams.length > 0
           ? `The user (${activity.from.name}) is a member of these teams: ${context.memberTeams
-              .map((t) => t.name)
-              .join(", ")}. `
+            .map((t) => t.name)
+            .join(", ")}. `
           : `The user (${activity.from.name}) is not a member of any teams. `),
       model: new OpenAIChatModel({
         apiKey: process.env.AZURE_OPENAI_API_KEY!,
@@ -82,7 +85,7 @@ export class NLPHandler {
         model: process.env.AZURE_OPENAI_MODEL_DEPLOYMENT_NAME!,
       }),
       messages: memory,
-    });
+    }, [a2aPrompt]);
 
     // Always available commands
     prompt.function(
@@ -239,60 +242,16 @@ export class NLPHandler {
       }
     );
 
-    prompt.function(
-      "getParkingLotItems",
-      "Get items from the parking lot for a team's standup",
-      {
-        type: "object",
-        properties: {
-          question: {
-            type: "string",
-            description: "The question to ask the standup agent",
-          },
-        },
-        required: ["question"],
-      },
-      async (params: { question: string }) => {
-        const cmd: TeamCommand = {
-          type: "askStandupAgent",
-          teamDetails: context.currentTeam!,
-          question: params.question,
-          userId: context.userId,
-        };
-        return this.teamCommands.handleCommand(cmd, commandContext);
-      }
-    );
-
-    prompt.function(
-      "askSupportAgent",
-      "Ask the support agent about GitHub issues",
-      {
-        type: "object",
-        properties: {
-          question: {
-            type: "string",
-            description:
-              "The question to ask the support agent about GitHub issues",
-          },
-          conversationId: {
-            type: "string",
-            description:
-              "The conversation ID where the support agent is active for this team",
-          },
-        },
-        required: ["question", "conversationId"],
-      },
-      async (params: { question: string; conversationId: string }) => {
-        const cmd: TeamCommand = {
-          type: "askSupportAgent",
-          teamDetails: context.currentTeam!,
-          question: params.question,
-          userId: context.userId,
-          conversationId: params.conversationId,
-        };
-        return this.teamCommands.handleCommand(cmd, context);
-      }
-    );
+    prompt.usePlugin('a2a', {
+      key: 'supportAgent',
+      url: 'http://localhost:8000/a2a',
+    }).usePlugin('a2a', {
+      key: 'currencyAgent',
+      url: 'http://localhost:10000',
+    }).usePlugin('a2a', {
+      key: 'standupAgent',
+      url: 'http://localhost:3000/a2a',
+    });
 
     prompt.function(
       "validateRelease",

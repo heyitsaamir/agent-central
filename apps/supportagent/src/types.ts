@@ -5,6 +5,7 @@ export type Activity = IMessageActivity;
 export interface SupportResponse {
   content: string;
   data: { toolName: string; result: any }[];
+  type?: 'completed' | 'input-required' | 'failed';
 }
 export interface Issue {
   number: number;
@@ -27,13 +28,7 @@ export interface SearchCriteria {
 
 export type SupportCommand =
   | {
-      type: "searchIssues";
-      query?: string;
-      priority?: "low priority" | "high priority";
-    }
-  | {
-      type: "createIssue";
-      title: string;
-      body: string;
-      labels?: string[];
-    };
+    type: "searchIssues";
+    query?: string;
+    priority?: "low priority" | "high priority";
+  }

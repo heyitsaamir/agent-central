@@ -4,7 +4,7 @@ import { PersistentStandupService } from "./PersistentStandupService";
 import { IStandupStorage } from "./Storage";
 
 export class StandupGroupManager {
-  constructor(private persistentService: PersistentStandupService) {}
+  constructor(private persistentService: PersistentStandupService) { }
 
   async wrapGroup(group: StandupGroup): Promise<StandupGroup> {
     // Create a proxy to intercept state-changing methods and persist after changes
@@ -27,6 +27,7 @@ export class StandupGroupManager {
                 "addParkingLotItem",
                 "closeStandup",
                 "setSaveHistory",
+                "clearParkingLot",
               ].includes(prop as string)
             ) {
               await this.persistentService.saveGroup(target);

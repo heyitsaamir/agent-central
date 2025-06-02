@@ -5,8 +5,7 @@ import { BaseStorageItem, IStorage } from "./CosmosStorage";
 export class FileStorage<
   TKey extends string | number = string,
   TValue extends BaseStorageItem = BaseStorageItem,
-> implements IStorage<TKey, TValue>
-{
+> implements IStorage<TKey, TValue> {
   private basePath: string;
   private databaseName: string;
   private containerName: string;
@@ -21,14 +20,25 @@ export class FileStorage<
     this.basePath = path.join(basePath, databaseName, containerName);
   }
 
-  private getFilePath(key: TKey, tenantId: string): string {
+  private async getOrCreateFilePath(key: TKey, tenantId: string): Promise<string> {
     const compositeKey = `${tenantId}:${key}`;
-    return path.join(this.basePath, `${compositeKey}.json`);
+    const filePath = path.join(this.basePath, `${compositeKey}.json`);
+
+    console.log("File path:", filePath);
+    try {
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
+        throw error;
+      }
+    }
+
+    return filePath;
   }
 
   async get(key: TKey, tenantId: string): Promise<TValue | undefined> {
     try {
-      const filePath = this.getFilePath(key, tenantId);
+      const filePath = await this.getOrCreateFilePath(key, tenantId);
       const data = await fs.readFile(filePath, "utf8");
       return JSON.parse(data) as TValue;
     } catch (error) {
@@ -43,13 +53,13 @@ export class FileStorage<
     if (!value.tenantId) {
       throw new Error("tenantId is required");
     }
-    const filePath = this.getFilePath(key, value.tenantId);
+    const filePath = await this.getOrCreateFilePath(key, value.tenantId);
     await fs.writeFile(filePath, JSON.stringify(value, null, 2), "utf8");
   }
 
   async delete(key: TKey, tenantId: string): Promise<void> {
     try {
-      const filePath = this.getFilePath(key, tenantId);
+      const filePath = await this.getOrCreateFilePath(key, tenantId);
       await fs.unlink(filePath);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
