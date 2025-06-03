@@ -1,12 +1,12 @@
 import { createPageSelectionCard } from "../models/AdaptiveCards";
-import { Standup } from "../models/Standup";
+import { StandupCoordinator } from "../models/StandupCoordinator";
 import { OneNoteStorage } from "../services/OneNoteStorage";
 import { NoStorage } from "../services/Storage";
 import { CommandContext } from "./types";
 
 export async function executeRegister(
   context: CommandContext,
-  standup: Standup,
+  standup: StandupCoordinator,
   text: string
 ) {
   const { send, conversationId, userId, userName, api, app } = context;
@@ -38,7 +38,7 @@ export async function executeRegister(
   }
 
   // Create storage and get available pages
-  const storage = new OneNoteStorage((api.user as any).http, "", {});
+  const storage = new OneNoteStorage((api.users as any).http, "", {});
   const pagesResult = await storage.getPages();
   if (pagesResult.type === "error") {
     await send(`Failed to get OneNote pages: ${pagesResult.message}`);

@@ -142,6 +142,33 @@ export class StandupGroup {
     return true;
   }
 
+  async addWorkItem(
+    userId: string | null,
+    workItem: string
+  ): Promise<boolean> {
+    const userIdAddingWork = userId || "";
+    const existingResponse = this.activeResponses.find(
+      (r) => r.userId === userIdAddingWork
+    );
+    if (existingResponse) {
+      // Add to planned work, separating multiple items with newlines
+      if (existingResponse.completedWork) {
+        existingResponse.completedWork += `\n${workItem}`;
+      } else {
+        existingResponse.completedWork = workItem;
+      }
+    } else {
+      this.activeResponses.push({
+        userId: userIdAddingWork,
+        plannedWork: "",
+        timestamp: new Date(),
+        completedWork: workItem,
+        parkingLot: "",
+      });
+    }
+    return true;
+  }
+
   async clearParkingLot(
     userId: string | null
   ): Promise<Result<StandupResponse[]>> {

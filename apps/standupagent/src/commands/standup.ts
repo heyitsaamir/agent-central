@@ -1,11 +1,11 @@
 import { cardAttachment } from "@microsoft/teams.api";
 import { createStandupCard } from "../models/AdaptiveCards";
-import { Standup } from "../models/Standup";
+import { StandupCoordinator } from "../models/StandupCoordinator";
 import { CommandContext } from "./types";
 
 export async function executeStartStandup(
   context: CommandContext,
-  standup: Standup,
+  standup: StandupCoordinator,
   shouldRestart = false
 ) {
   const { send, conversationId, tenantId } = context;
@@ -51,7 +51,7 @@ export async function executeStartStandup(
 
 export async function executeCloseStandup(
   context: CommandContext,
-  standup: Standup
+  standup: StandupCoordinator
 ) {
   const { send, conversationId, tenantId } = context;
 

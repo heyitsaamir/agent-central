@@ -1,5 +1,5 @@
 import { SPECIAL_STRINGS } from "../models/AdaptiveCards";
-import { Standup } from "../models/Standup";
+import { StandupCoordinator } from "../models/StandupCoordinator";
 import { StandupResponse } from "../models/types";
 import { OneNoteStorage } from "../services/OneNoteStorage";
 
@@ -19,7 +19,7 @@ export async function handleCardAction(
   activity: any,
   send: (message: any) => Promise<any>,
   api: any,
-  standup: Standup
+  standup: StandupCoordinator
 ) {
   const conversationId = activity.conversation.id;
   const data = activity.value?.action?.data;

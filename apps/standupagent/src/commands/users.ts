@@ -1,9 +1,9 @@
-import { Standup } from "../models/Standup";
+import { StandupCoordinator } from "../models/StandupCoordinator";
 import { CommandContext } from "./types";
 
 export async function executeAddUsers(
   context: CommandContext,
-  standup: Standup
+  standup: StandupCoordinator
 ) {
   const { send, conversationId, mentions } = context;
 
@@ -27,7 +27,7 @@ export async function executeAddUsers(
 
 export async function executeRemoveUsers(
   context: CommandContext,
-  standup: Standup
+  standup: StandupCoordinator
 ) {
   const { send, conversationId, mentions } = context;
 
@@ -47,7 +47,7 @@ export async function executeRemoveUsers(
 
 export async function executeGroupDetails(
   context: CommandContext,
-  standup: Standup
+  standup: StandupCoordinator
 ) {
   const { send, conversationId } = context;
 

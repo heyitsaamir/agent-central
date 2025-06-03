@@ -1,9 +1,9 @@
-import { Standup } from "../models/Standup";
+import { StandupCoordinator } from "../models/StandupCoordinator";
 import { Result } from "../models/types";
 
-let standupInstance: Standup | null = null;
+let standupInstance: StandupCoordinator | null = null;
 
-export async function ensureStandupInitialized(): Promise<Result<Standup>> {
+export async function ensureStandupInitialized(): Promise<Result<StandupCoordinator>> {
   if (!standupInstance) {
     try {
       const cosmosConnectionString = process.env.COSMOS_CONNECTION_STRING;
@@ -16,7 +16,7 @@ export async function ensureStandupInitialized(): Promise<Result<Standup>> {
           message: "COSMOS_CONNECTION_STRING environment variable not set",
         };
       }
-      const initializingStandup = new Standup();
+      const initializingStandup = new StandupCoordinator();
       await initializingStandup.initialize(cosmosConnectionString);
       standupInstance = initializingStandup;
       console.log("Standup initialized successfully!");

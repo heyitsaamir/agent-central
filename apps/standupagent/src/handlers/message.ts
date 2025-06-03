@@ -13,7 +13,8 @@ import {
   createHistoricalStandupsCard,
   createParkingLotCard,
 } from "../models/AdaptiveCards";
-import { Standup } from "../models/Standup";
+import { StandupCoordinator } from "../models/StandupCoordinator";
+import { registerGroupChatFunctions, registerPersonalChatFunctions } from "./nlpFunctions";
 
 export async function handleMessage(
   activity: IMessageActivity,
@@ -26,22 +27,22 @@ export async function handleMessage(
     | "userName"
     | "tenantId"
   >,
-  standup: Standup
+  standup: StandupCoordinator
 ) {
   if (activity.text == null) {
     return;
   }
 
-  // if (!isSignedIn) {
-  //   await send("Please sign in to use this bot.");
-  //   await signin();
-  //   return;
-  // }
+  // Detect conversation type
+  const isGroupChat = activity.conversation.conversationType !== "personal";
 
-  // Initialize ChatPrompt once for natural language commands
+  // Initialize ChatPrompt with context-specific instructions
+  const instructions = isGroupChat
+    ? "You are a Standup Agent for managing team standups. You can register groups, manage users, start/close standups, and handle parking lot items for group standup sessions."
+    : "You are a Standup Agent for personal standup management. You can help manage your standup settings, track daily work, and view your personal standup history across teams.";
+
   const nlpPrompt = new ChatPrompt({
-    instructions:
-      "You are a Standup Agent assistant that understands natural language commands. Use the tools available to you to figure out what the user wants to do.",
+    instructions,
     model: new OpenAIChatModel({
       apiKey: process.env.AZURE_OPENAI_API_KEY,
       endpoint: process.env.AZURE_OPENAI_ENDPOINT,
@@ -113,59 +114,63 @@ export async function handleMessage(
         return;
       }
 
-      // Handle history settings
-      const group = await standup.validateGroup(
-        context.conversationId,
-        context.tenantId
-      );
-      if (!group) {
+      // Handle history settings (only for group chats)
+      if (isGroupChat) {
+        const group = await standup.validateGroup(
+          context.conversationId,
+          context.tenantId
+        );
+        if (!group) {
+          await partialContext.send(
+            "No standup group registered. Use !register <onenote-link> to create one."
+          );
+          return;
+        }
+
+        const enable = text.includes("on");
+        const disable = text.includes("off");
+
+        if (!enable && !disable) {
+          const currentSetting = await group.getSaveHistory();
+          await partialContext.send(
+            `History saving is currently ${currentSetting ? "enabled" : "disabled"}. Use "!history on" or "!history off" to change.`
+          );
+          return;
+        }
+
+        await group.setSaveHistory(enable);
         await partialContext.send(
-          "No standup group registered. Use !register <onenote-link> to create one."
+          `History saving has been ${enable ? "enabled" : "disabled"}.`
         );
         return;
-      }
-
-      const enable = text.includes("on");
-      const disable = text.includes("off");
-
-      if (!enable && !disable) {
-        const currentSetting = await group.getSaveHistory();
-        await partialContext.send(
-          `History saving is currently ${currentSetting ? "enabled" : "disabled"
-          }. Use "!history on" or "!history off" to change.`
-        );
+      } else {
+        await partialContext.send("History settings are only available in group chats. Use natural language to view your personal history.");
         return;
       }
-
-      await group.setSaveHistory(enable);
-      await partialContext.send(
-        `History saving has been ${enable ? "enabled" : "disabled"}.`
-      );
-      return;
     }
 
-    if (text.includes("group details")) {
+    if (text.includes("group details") && isGroupChat) {
       await executeGroupDetails(context, standup);
       return;
     }
 
-    if (text.includes("restart standup")) {
+    if (text.includes("restart standup") && isGroupChat) {
       await executeStartStandup(context, standup, true);
       return;
     }
 
-    if (text.includes("start standup")) {
+    if (text.includes("start standup") && isGroupChat) {
       await executeStartStandup(context, standup);
       return;
     }
 
-    if (text.includes("close standup")) {
+    if (text.includes("close standup") && isGroupChat) {
       await executeCloseStandup(context, standup);
       return;
     }
 
-    // New command for parking lot items
-    if (text.startsWith("!parkinglot")) {
+    // Parking lot command (only for group chats)
+    if (text.startsWith("!parkinglot") && isGroupChat) {
       const parkingLotItem = activity.text.slice("!parkinglot".length).trim();
 
       // If no item provided, show current parking lot items
@@ -210,268 +215,44 @@ export async function handleMessage(
       );
       return;
     }
+
+    // If we get here, it's an unrecognized command
+    await partialContext.send(
+      `Unrecognized command. Try using natural language or check available commands for ${isGroupChat ? "group chats" : "1:1 conversations"}.`
+    );
     return;
   }
 
   console.log("Natural language command detected ", text);
-  let didMessageUser: boolean = false;
   try {
-    // Register functions for natural language command interpretation
-    nlpPrompt.function("register", "Register a new standup group", async () => {
-      didMessageUser = true;
-      await executeRegister(context, standup, text);
-    });
-
-    nlpPrompt.function("add", "Add users to the standup group", async () => {
-      didMessageUser = true;
-      console.log("Adding users to the standup group");
-      await executeAddUsers(context, standup);
-    });
-
-    nlpPrompt.function(
-      "remove",
-      "Remove users from the standup group",
-      async () => {
-        didMessageUser = true;
-        console.log("Removing users from the standup group");
-        await executeRemoveUsers(context, standup);
-      }
-    );
-
-    nlpPrompt.function(
-      "groupDetails",
-      "Show standup group information",
-      async () => {
-        didMessageUser = true;
-        console.log("Showing standup group information");
-        await executeGroupDetails(context, standup);
-      }
-    );
-
-    nlpPrompt.function(
-      "startStandup",
-      "Start a new standup session",
-      async () => {
-        didMessageUser = true;
-        console.log("Starting a new standup session");
-        await executeStartStandup(context, standup);
-      }
-    );
-
-    nlpPrompt.function(
-      "restartStandup",
-      "Restart the current standup session",
-      async () => {
-        didMessageUser = true;
-        console.log("Restarting the current standup session");
-        await executeStartStandup(context, standup, true);
-      }
-    );
-
-    nlpPrompt.function(
-      "closeStandup",
-      "End the current standup session",
-      async () => {
-        didMessageUser = true;
-        console.log("Ending the current standup session");
-        await executeCloseStandup(context, standup);
-      }
-    );
-
-    nlpPrompt.function(
-      "toggleHistory",
-      "Enable or disable history saving for the standup group",
-      {
-        type: "object",
-        properties: {
-          enable: {
-            type: "boolean",
-            description: "Enable or disable history saving",
-          },
-        },
-        required: ["enable"],
+    // Create mutable context to track if functions have already messaged the user
+    const messageContext = {
+      send: async (message: any) => {
+        await partialContext.send(message);
       },
-      async (args: { enable: boolean }) => {
-        const { enable } = args;
-        didMessageUser = false;
-        console.log("Toggling history setting");
-        const group = await standup.validateGroup(
-          context.conversationId,
-          context.tenantId
-        );
-        if (!group) {
-          return "No standup group registered. Use !register <onenote-link> to create one.";
-        }
+      didMessageUser: false
+    };
 
-        await group.setSaveHistory(enable);
-        return `History saving has been ${enable ? "enabled" : "disabled"}.`;
-      }
-    );
-
-    nlpPrompt.function(
-      "checkHistory",
-      "Check the current history saving setting",
-      async () => {
-        didMessageUser = true;
-        console.log("Checking history setting");
-        const group = await standup.validateGroup(
-          context.conversationId,
-          context.tenantId
-        );
-        if (!group) {
-          await partialContext.send(
-            "No standup group registered. Use !register <onenote-link> to create one."
-          );
-          return;
-        }
-
-        const currentSetting = await group.getSaveHistory();
-        await partialContext.send(
-          `History saving is currently ${currentSetting ? "enabled" : "disabled"
-          }. You can change this with "enable history" or "disable history".`
-        );
-      }
-    );
-
-    nlpPrompt.function(
-      "clearParkingLot",
-      "Clear all items from the parking lot",
-      async () => {
-        console.log("Clearing parking lot items");
-        const group = await standup.validateGroup(
-          context.conversationId,
-          context.tenantId
-        );
-        if (!group) {
-          await partialContext.send(
-            "No standup group registered. Use !register <onenote-link> to create one."
-          );
-          return;
-        }
-        const clearedItems = await group.clearParkingLot(context.userId);
-        return clearedItems.message;
-      }
-    );
-
-    nlpPrompt.function(
-      "viewParkingLot",
-      "View current parking lot items",
-      async () => {
-        didMessageUser = true;
-        console.log("Viewing parking lot items");
-        const result = await standup.getParkingLotItems(
-          context.conversationId,
-          context.tenantId
-        );
-
-        if (result.type === "error") {
-          await partialContext.send(result.message);
-          return;
-        }
-
-        const card = createParkingLotCard(result.data.parkingLotItems);
-        await partialContext.send({
-          type: "message",
-          attachments: [
-            {
-              contentType: "application/vnd.microsoft.card.adaptive",
-              content: card,
-            },
-          ],
-        });
-      }
-    );
-
-    nlpPrompt.function(
-      "addParkingLot",
-      "Add an item to discuss in the next standup's parking lot",
-      {
-        type: "object",
-        properties: {
-          item: {
-            type: "string",
-            description: "The item to add to the parking lot",
-          },
-        },
-        required: ["item"],
-      },
-      async (args: { item: string }) => {
-        didMessageUser = true;
-        console.log("Adding parking lot item");
-        const group = await standup.validateGroup(
-          context.conversationId,
-          context.tenantId
-        );
-        if (!group) {
-          await partialContext.send(
-            "No standup group registered. Use !register <onenote-link> to create one."
-          );
-          return;
-        }
-
-        await group.addParkingLotItem(context.userId, args.item);
-        await partialContext.send(
-          "Your parking lot item has been saved for the next standup."
-        );
-      }
-    );
-
-    nlpPrompt.function(
-      "viewHistory",
-      "View historical standup information",
-      async () => {
-        didMessageUser = true;
-        try {
-          console.log("Viewing standup history");
-          const result = await standup.getHistoricalStandups(
-            context.conversationId,
-            context.userId,
-            context.tenantId,
-            activity.conversation.isGroup ?? false
-          );
-
-          if (result.type === "error") {
-            await partialContext.send(result.message);
-            return;
-          }
-
-          await partialContext.send({
-            type: "message",
-            attachments: [
-              {
-                contentType: "application/vnd.microsoft.card.adaptive",
-                content: createHistoricalStandupsCard(result.data.histories),
-              },
-            ],
-          });
-        } catch (error) {
-          console.error("Error viewing standup history:", error);
-          throw error;
-        }
-      }
-    );
-
-    nlpPrompt.function(
-      "purpose",
-      "Explain the purpose of the bot",
-      async () => {
-        console.log("Explaining the purpose of the bot");
-        return `I can help you conduct standups by managing your standup group, adding or removing users, starting or closing standup sessions, managing history settings, viewing historical standups, and saving parking lot items for future standups (use !parkinglot or just tell me what you want to discuss).`;
-      }
-    );
+    // Register appropriate functions based on conversation type
+    if (isGroupChat) {
+      registerGroupChatFunctions(nlpPrompt, context, standup, messageContext, activity, text);
+    } else {
+      registerPersonalChatFunctions(nlpPrompt, context, standup, messageContext, activity, text);
+    }
 
     const result = await nlpPrompt.send(text);
     console.log("Result of the natural language command", result);
-    if (!didMessageUser) {
-      console.log("Sending the result of the natural language command");
-      await partialContext.send(result.content ?? "");
-    } else {
-      console.log("Did not send the result of the natural language command");
+
+    // Only send the result from NLP processing if functions haven't already messaged the user
+    if (!messageContext.didMessageUser) {
+      await partialContext.send(result.content ?? "I couldn't process that request. Please try rephrasing.");
     }
   } catch (error) {
     console.error("Error processing natural language command:", error);
     await partialContext.send(
-      "I couldn't understand that command. Try using ! prefix for direct commands."
+      `I couldn't understand that command. ${isGroupChat
+        ? "Try using ! prefix for direct commands or ask me about standup management."
+        : "Try asking about your settings, work items, or standup history."}`
     );
   }
 }

@@ -4,12 +4,12 @@ import {
   ITaskSubmitInvokeActivity,
 } from "@microsoft/teams.api";
 import { createTaskModule } from "../models/AdaptiveCards";
-import { Standup } from "../models/Standup";
+import { StandupCoordinator } from "../models/StandupCoordinator";
 import { StandupResponse } from "../models/types";
 
 export async function handleDialogOpen(
   activity: ITaskFetchInvokeActivity,
-  standup?: Standup
+  standup?: StandupCoordinator
 ) {
   const userId = activity.from.id;
   let existingResponse: StandupResponse | undefined;
@@ -50,7 +50,7 @@ export async function handleDialogOpen(
 export async function handleDialogSubmit(
   activity: ITaskSubmitInvokeActivity,
   send: (message: any) => Promise<any>,
-  standup: Standup
+  standup: StandupCoordinator
 ) {
   if (!standup) return;
 

@@ -27,6 +27,7 @@ export class StandupGroupManager {
                 "addParkingLotItem",
                 "closeStandup",
                 "setSaveHistory",
+                "addWorkItem",
                 "clearParkingLot",
               ].includes(prop as string)
             ) {

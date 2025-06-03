@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch via NPM",
+      "request": "launch",
+      "runtimeArgs": ["run-script", "dev", "--preserve-symlinks"],
+      "cwd": "${workspaceFolder}/apps/${input:appSelect}",
+      "runtimeExecutable": "npm",
+      "type": "node",
+      "env": {
+        "LOG_LEVEL": "debug"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "appSelect",
+      "description": "Select the app to launch",
+      "type": "pickString",
+      "options": ["standupagent", "supportagent", "teamagent"]
+    }
+  ]
+}

@@ -17,12 +17,11 @@ export interface IStorage<
 export class CosmosStorage<
   TKey extends string | number = string,
   TValue extends BaseStorageItem = BaseStorageItem,
-> implements IStorage<TKey, TValue>
-{
+> implements IStorage<TKey, TValue> {
   constructor(
     private container: Container,
     private partitionKeyPath: string
-  ) {}
+  ) { }
 
   async get(key: TKey, tenantId: string): Promise<TValue | undefined> {
     try {
@@ -63,7 +62,7 @@ export class CosmosStorageFactory {
   private static containers = new Map<string, Container>();
 
   static initialize(connectionString: string) {
-    this.client = new CosmosClient(connectionString);
+    CosmosStorageFactory.client = new CosmosClient(connectionString);
   }
 
   static async getStorage<
@@ -75,7 +74,7 @@ export class CosmosStorageFactory {
     partitionKeyPath: string = "/id"
   ): Promise<CosmosStorage<TKey, TValue>> {
     // Validate initialization
-    if (!this.client) {
+    if (!CosmosStorageFactory.client) {
       throw new Error(
         "CosmosStorageFactory not initialized. Call initialize() first."
       );
@@ -83,10 +82,10 @@ export class CosmosStorageFactory {
 
     const cacheKey = `${databaseName}:${containerName}`;
 
-    if (!this.containers.has(cacheKey)) {
+    if (!CosmosStorageFactory.containers.has(cacheKey)) {
       try {
         // Create database if it doesn't exist
-        const { database } = await this.client.databases.createIfNotExists({
+        const { database } = await CosmosStorageFactory.client.databases.createIfNotExists({
           id: databaseName,
         });
 
@@ -99,7 +98,7 @@ export class CosmosStorageFactory {
           } as PartitionKeyDefinition,
         });
 
-        this.containers.set(cacheKey, container);
+        CosmosStorageFactory.containers.set(cacheKey, container);
       } catch (error) {
         throw new Error(
           `Failed to initialize storage for ${containerName}: ${error}`
@@ -107,7 +106,7 @@ export class CosmosStorageFactory {
       }
     }
 
-    return new CosmosStorage(this.containers.get(cacheKey)!, partitionKeyPath);
+    return new CosmosStorage(CosmosStorageFactory.containers.get(cacheKey)!, partitionKeyPath);
   }
 }
 
