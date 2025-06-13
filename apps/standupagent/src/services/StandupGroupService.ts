@@ -24,7 +24,7 @@ export class StandupGroupService {
         storage: IStandupStorage,
         creator: User,
         tenantId: string,
-        includeHistory: boolean = false
+        includeHistory: boolean = true
     ): Promise<Result<{ message: string }>> {
         const existingGroup = await this.persistentService.loadGroup(
             conversationId,

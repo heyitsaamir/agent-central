@@ -32,7 +32,7 @@ export class StandupCoordinator {
     storage: IStandupStorage,
     creator: User,
     tenantId: string,
-    includeHistory: boolean = false
+    includeHistory: boolean = true
   ): Promise<Result<{ message: string }>> {
     return await this.groupService.registerGroup(conversationId, storage, creator, tenantId, includeHistory);
   }
