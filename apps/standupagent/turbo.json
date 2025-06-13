@@ -4,8 +4,7 @@
     "build": {
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"],
-      "cache": false,
-      "dependsOn": ["a2aserver#build"]
+      "cache": false
     }
   }
 }
