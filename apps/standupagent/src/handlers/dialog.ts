@@ -62,7 +62,7 @@ export async function handleDialogSubmit(
     completedWork: (data.completedWork ?? "").replace("\n", " \n"),
     plannedWork: (data.plannedWork ?? "").replace("\n", " \n"),
     parkingLot: (data.parkingLot ?? "").replace("\n", " \n"),
-    timestamp: new Date(),
+    timestamp: (new Date()).toISOString(),
   };
 
   // Get the group and check if standup is active
@@ -73,9 +73,9 @@ export async function handleDialogSubmit(
   if (!group) return;
 
   let result;
-  const isActive = await group.isStandupActive();
+  const startedAt = await group.isStandupActive();
 
-  if (isActive) {
+  if (!!startedAt) {
     // If standup is active, submit the full response
     result = await standup.submitResponse(
       conversationId,

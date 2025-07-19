@@ -12,7 +12,7 @@ export class StandupGroup {
     private readonly persistentService: PersistentStandupService,
     private users: User[] = [],
     private activeResponses: StandupResponse[] = [],
-    private isActive: boolean = false,
+    private startedAt: string | null = null,
     private activeStandupActivityId: string | null = null,
     saveHistory: boolean = false
   ) {
@@ -41,7 +41,7 @@ export class StandupGroup {
   }
 
   async persistStandup(): Promise<Result<void>> {
-    if (!this.isActive || this.activeResponses.length === 0) {
+    if (!this.startedAt || this.activeResponses.length === 0) {
       return {
         type: "error",
         message: "No active standup to persist",
@@ -88,7 +88,7 @@ export class StandupGroup {
   async startStandup(
     activityId?: string
   ): Promise<{ success: boolean; previousParkingLot?: string[] }> {
-    if (this.isActive) return { success: false };
+    if (this.startedAt) return { success: false };
 
     let previousParkingLot: string[] | undefined;
 
@@ -99,7 +99,7 @@ export class StandupGroup {
       }
     }
 
-    this.isActive = true;
+    this.startedAt = (new Date()).toISOString();
     this.activeStandupActivityId = activityId || null;
 
     return {
@@ -109,7 +109,7 @@ export class StandupGroup {
   }
 
   async addResponse(response: StandupResponse): Promise<boolean> {
-    if (!this.isActive) return false;
+    if (!this.startedAt) return false;
     if (this.activeResponses.find((r) => r.userId === response.userId)) {
       // Remove existing response
       this.activeResponses = this.activeResponses.filter(
@@ -134,7 +134,7 @@ export class StandupGroup {
       this.activeResponses.push({
         userId: userIdAddingParkingLot,
         parkingLot,
-        timestamp: new Date(),
+        timestamp: (new Date()).toISOString(),
         completedWork: "",
         plannedWork: "",
       });
@@ -161,7 +161,7 @@ export class StandupGroup {
       this.activeResponses.push({
         userId: userIdAddingWork,
         plannedWork: "",
-        timestamp: new Date(),
+        timestamp: (new Date()).toISOString(),
         completedWork: workItem,
         parkingLot: "",
       });
@@ -174,7 +174,7 @@ export class StandupGroup {
   ): Promise<Result<StandupResponse[]>> {
     console.log(`Clearing parking lot items as requested by user: ${userId}`);
     // If there is a standup in progress, we can't
-    if (this.isActive) {
+    if (this.startedAt) {
       return {
         type: "error",
         message: "There is an active standup in progress. Cannot clear parking lot right now",
@@ -188,8 +188,8 @@ export class StandupGroup {
   async closeStandup(
     toBeRestarted: boolean = false
   ): Promise<StandupResponse[]> {
-    if (!this.isActive) return [];
-    this.isActive = false;
+    if (!this.startedAt) return [];
+    this.startedAt = null;
     const responses = [...this.activeResponses];
 
     if (this.saveHistory && !toBeRestarted) {
@@ -211,8 +211,12 @@ export class StandupGroup {
     return responses;
   }
 
+  async getStartedAt(): Promise<string | null> {
+    return this.startedAt;
+  }
+
   async isStandupActive(): Promise<boolean> {
-    return this.isActive;
+    return !!this.startedAt;
   }
 
   async hasUser(userId: string): Promise<boolean> {

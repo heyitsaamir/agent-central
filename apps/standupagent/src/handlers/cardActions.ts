@@ -77,7 +77,7 @@ export async function handleCardAction(
         userId: data.userId,
         completedWork: data.completedWork,
         plannedWork: data.plannedWork,
-        timestamp: new Date(),
+        timestamp: (new Date()).toISOString(),
       };
 
       const result = await standup.submitResponse(

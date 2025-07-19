@@ -56,7 +56,7 @@ export class StandupGroupManager {
       this.persistentService,
       [creator],
       [],
-      false,
+      null,
       null,
       saveHistory
     );

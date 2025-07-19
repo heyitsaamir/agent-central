@@ -60,9 +60,9 @@ export async function executeGroupDetails(
     return;
   }
 
-  const { members, isActive, storageType } = result.data;
+  const { members, startedAt, storageType } = result.data;
   const memberList = members.map((m) => m.name).join(", ");
-  const status = isActive ? "Active standup in progress" : "No active standup";
+  const status = !!startedAt ? "Active standup in progress" : "No active standup";
 
   await send(`📊 **Standup Group Details**
 Members (${members.length}): ${memberList}

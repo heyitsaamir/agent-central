@@ -194,6 +194,7 @@ export function createStandupSummaryCard(
 
 export function createStandupCard(
   completedResponses: string[] = [],
+  existingResponses: string[] = [],
   previousParkingLot?: string[]
 ): IAdaptiveCard {
   const previousParkingLotItems = previousParkingLot
@@ -220,9 +221,31 @@ export function createStandupCard(
         ? [
           {
             type: "TextBlock" as const,
-            text: `Completed responses: ${completedResponses.join(", ")}`,
+            text: `✅ Completed`,
             wrap: true,
             spacing: "Medium" as const,
+          },
+          {
+            type: "TextBlock" as const,
+            text: `${completedResponses.join(", ")}`,
+            wrap: true,
+            spacing: "None" as const,
+          },
+        ]
+        : []),
+      ...(existingResponses.length > 0
+        ? [
+          {
+            type: "TextBlock" as const,
+            text: `🔄 Async Responses`,
+            wrap: true,
+            spacing: "ExtraSmall" as const,
+          },
+          {
+            type: "TextBlock" as const,
+            text: `${existingResponses.join(", ")}`,
+            wrap: true,
+            spacing: "None" as const,
           },
         ]
         : []),

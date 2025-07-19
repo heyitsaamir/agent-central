@@ -95,7 +95,7 @@ export class PersistentStandupService {
       this,
       data.users || [],
       data.activeResponses || [],
-      data.isActive || false,
+      data.startedAt,
       data.activeStandupActivityId || null,
       data.saveHistory || false
     );
@@ -107,13 +107,13 @@ export class PersistentStandupService {
     const key = this.getStorageKey(group);
     const [
       users,
-      isActive,
+      startedAt,
       activeResponses,
       activeStandupActivityId,
       saveHistory,
     ] = await Promise.all([
       group.getUsers(),
-      group.isStandupActive(),
+      group.getStartedAt(),
       group.getActiveResponses(),
       group.getActiveStandupActivityId(),
       group.getSaveHistory(),
@@ -124,7 +124,7 @@ export class PersistentStandupService {
       tenantId: key.tenantId,
       type: "group",
       users,
-      isActive,
+      startedAt,
       activeResponses,
       activeStandupActivityId,
       storage: group.storage.getStorageInfo(),
@@ -138,13 +138,13 @@ export class PersistentStandupService {
     // Get the initial state to store in CosmosDB
     const [
       users,
-      isActive,
+      startedAt,
       activeResponses,
       activeStandupActivityId,
       saveHistory,
     ] = await Promise.all([
       group.getUsers(),
-      group.isStandupActive(),
+      group.getStartedAt(),
       group.getActiveResponses(),
       group.getActiveStandupActivityId(),
       group.getSaveHistory(),
@@ -158,7 +158,7 @@ export class PersistentStandupService {
       this,
       users,
       activeResponses,
-      isActive,
+      startedAt,
       activeStandupActivityId,
       saveHistory
     );
@@ -206,7 +206,7 @@ export class PersistentStandupService {
             this,
             groupData.users || [],
             groupData.activeResponses || [],
-            groupData.isActive || false,
+            groupData.startedAt,
             groupData.activeStandupActivityId || null,
             groupData.saveHistory || false
           );

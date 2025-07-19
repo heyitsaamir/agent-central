@@ -212,7 +212,18 @@ export class StandupGroupService {
             if (activityId) {
                 const users = await group.getUsers();
                 const responses = await group.getActiveResponses();
-                const completedUsers = responses.map((r) => {
+                const startedAt = await group.getStartedAt();
+                const statusAvailableButNotCompletedDuringStandup = !!startedAt ? responses.filter(
+                    r => (new Date(r.timestamp)).getTime() < (new Date(startedAt)).getTime()
+                ) : [];
+                const freshStatusAvailable = !!startedAt ? responses.filter(
+                    r => (new Date(r.timestamp)).getTime() >= (new Date(startedAt)).getTime()
+                ) : [];
+                const completedUsers = freshStatusAvailable.map((r) => {
+                    const user = users.find((u) => u.id === r.userId);
+                    return user ? user.name : "Unknown";
+                });
+                const asyncUsers = statusAvailableButNotCompletedDuringStandup.map((r) => {
                     const user = users.find((u) => u.id === r.userId);
                     return user ? user.name : "Unknown";
                 });
@@ -231,7 +242,7 @@ export class StandupGroupService {
                     attachments: [
                         {
                             contentType: "application/vnd.microsoft.card.adaptive",
-                            content: createStandupCard(completedUsers, previousParkingLot),
+                            content: createStandupCard(completedUsers, asyncUsers, previousParkingLot),
                         },
                     ],
                 });
@@ -381,7 +392,7 @@ export class StandupGroupService {
         conversationId: string,
         tenantId: string
     ): Promise<
-        Result<{ members: User[]; isActive: boolean; storageType: string }>
+        Result<{ members: User[]; startedAt: string | null; storageType: string }>
     > {
         const group = await this.validateGroup(conversationId, tenantId);
         if (!group) {
@@ -393,14 +404,14 @@ export class StandupGroupService {
         }
 
         const members = await group.getUsers();
-        const isActive = await group.isStandupActive();
+        const startedAt = await group.getStartedAt();
         const storageType = group.storage.constructor.name.replace("Storage", "");
 
         return {
             type: "success",
             data: {
                 members,
-                isActive,
+                startedAt,
                 storageType,
             },
             message: "Group details retrieved successfully",

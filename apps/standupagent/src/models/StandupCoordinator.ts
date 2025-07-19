@@ -103,7 +103,7 @@ export class StandupCoordinator {
   async getGroupDetails(
     conversationId: string,
     tenantId: string
-  ): Promise<Result<{ members: User[]; isActive: boolean; storageType: string }>> {
+  ): Promise<Result<{ members: User[]; startedAt: string | null; storageType: string }>> {
     return await this.groupService.getGroupDetails(conversationId, tenantId);
   }
 

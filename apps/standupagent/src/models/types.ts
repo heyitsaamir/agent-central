@@ -8,7 +8,7 @@ export interface StandupResponse {
   completedWork: string;
   plannedWork: string;
   parkingLot?: string;
-  timestamp: Date;
+  timestamp: string;
 }
 
 export type Success<T> = {

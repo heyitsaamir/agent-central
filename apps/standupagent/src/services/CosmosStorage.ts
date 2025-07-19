@@ -126,7 +126,7 @@ export interface BaseStorageItem {
 export interface GroupStorageItem extends BaseStorageItem {
   readonly type: "group";
   users: User[];
-  isActive: boolean;
+  startedAt: string | null;
   activeResponses: StandupResponse[];
   storage: {
     type: string;
