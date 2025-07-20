@@ -13,6 +13,7 @@ export async function handleDialogOpen(
 ) {
   const userId = activity.from.id;
   let existingResponse: StandupResponse | undefined;
+  let plannedWorkFromLastTime: string | undefined;
 
   if (standup) {
     const group = await standup.validateGroup(
@@ -24,6 +25,19 @@ export async function handleDialogOpen(
       existingResponse = responses.find(
         (r: StandupResponse) => r.userId === userId
       );
+      const history = await standup.getHistoricalStandups({
+        userId,
+        tenantId: activity.conversation.tenantId || "unknown",
+      });
+      if (history.type === 'success') {
+        const lastResponse = history.data.histories.reduce((latest, current) => {
+          const currentDate = new Date(current.date);
+          return !latest || currentDate > new Date(latest.date) ? current : latest;
+        }, history.data.histories.at(0));
+        if (lastResponse) {
+          plannedWorkFromLastTime = lastResponse.responses.at(0)?.plannedWork;
+        }
+      }
     }
   }
 
@@ -39,7 +53,8 @@ export async function handleDialogOpen(
               id: userId,
               name: activity.from.name,
             },
-            existingResponse
+            existingResponse,
+            plannedWorkFromLastTime
           )
         ),
       },

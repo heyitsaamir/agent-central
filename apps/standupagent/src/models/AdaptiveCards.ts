@@ -194,8 +194,8 @@ export function createStandupSummaryCard(
 
 export function createStandupCard(
   completedResponses: string[] = [],
-  existingResponses: string[] = [],
-  previousParkingLot?: string[]
+  previousParkingLot?: string[],
+  excludeActions: boolean = false
 ): IAdaptiveCard {
   const previousParkingLotItems = previousParkingLot
     ?.flatMap((p) => p.split("\n").map((p) => p.trim()))
@@ -233,22 +233,6 @@ export function createStandupCard(
           },
         ]
         : []),
-      ...(existingResponses.length > 0
-        ? [
-          {
-            type: "TextBlock" as const,
-            text: `🔄 Async Responses`,
-            wrap: true,
-            spacing: "ExtraSmall" as const,
-          },
-          {
-            type: "TextBlock" as const,
-            text: `${existingResponses.join(", ")}`,
-            wrap: true,
-            spacing: "None" as const,
-          },
-        ]
-        : []),
       ...(previousParkingLotItems && previousParkingLotItems.length > 0
         ? [
           {
@@ -279,7 +263,7 @@ export function createStandupCard(
           ),
         ]
         : []),
-      {
+      ...(excludeActions ? [] : [{
         type: "ActionSet",
         actions: [
           new TaskFetchAction({})
@@ -295,7 +279,7 @@ export function createStandupCard(
               previousParkingLot: JSON.stringify(previousParkingLotItems),
             }),
         ],
-      },
+      } satisfies IActionSet]),
     ],
   };
 }
@@ -400,7 +384,8 @@ export function createParkingLotCard(
 
 export function createTaskModule(
   user: User,
-  existingResponse?: StandupResponse
+  existingResponse?: StandupResponse,
+  plannedWorkFromLastTime?: string
 ): IAdaptiveCard {
   return {
     type: "AdaptiveCard",
@@ -413,6 +398,23 @@ export function createTaskModule(
         size: "Large",
         weight: "Bolder",
       } satisfies ITextBlock,
+      ...(plannedWorkFromLastTime
+        ? [
+          {
+            type: "TextBlock" as const,
+            text: "Planned work from last time:",
+            wrap: true,
+            weight: 'Bolder',
+          } satisfies ITextBlock,
+          {
+            type: "TextBlock" as const,
+            text: convertTextToMarkdownList(plannedWorkFromLastTime),
+            wrap: true,
+            isSubtle: true,
+            spacing: 'None',
+          } satisfies ITextBlock,
+        ]
+        : []),
       {
         type: "TextBlock" as const,
         text: "What did you do since last standup?",

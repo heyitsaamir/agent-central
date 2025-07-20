@@ -3,7 +3,6 @@ import { IStandupStorage } from "../services/Storage";
 import { Result, StandupResponse, StandupSummary, User } from "./types";
 
 export class StandupGroup {
-  private saveHistory: boolean = false;
 
   constructor(
     public readonly conversationId: string,
@@ -14,10 +13,8 @@ export class StandupGroup {
     private activeResponses: StandupResponse[] = [],
     private startedAt: string | null = null,
     private activeStandupActivityId: string | null = null,
-    saveHistory: boolean = false
+    private saveHistory: boolean = false
   ) {
-    this.users = users;
-    this.saveHistory = saveHistory;
   }
 
   async getSaveHistory(): Promise<boolean> {
@@ -41,10 +38,10 @@ export class StandupGroup {
   }
 
   async persistStandup(): Promise<Result<void>> {
-    if (!this.startedAt || this.activeResponses.length === 0) {
+    if (this.activeResponses.length === 0) {
       return {
         type: "error",
-        message: "No active standup to persist",
+        message: "No active responses to persist",
       };
     }
 

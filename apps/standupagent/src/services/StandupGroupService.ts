@@ -213,17 +213,10 @@ export class StandupGroupService {
                 const users = await group.getUsers();
                 const responses = await group.getActiveResponses();
                 const startedAt = await group.getStartedAt();
-                const statusAvailableButNotCompletedDuringStandup = !!startedAt ? responses.filter(
-                    r => (new Date(r.timestamp)).getTime() < (new Date(startedAt)).getTime()
-                ) : [];
                 const freshStatusAvailable = !!startedAt ? responses.filter(
                     r => (new Date(r.timestamp)).getTime() >= (new Date(startedAt)).getTime()
                 ) : [];
                 const completedUsers = freshStatusAvailable.map((r) => {
-                    const user = users.find((u) => u.id === r.userId);
-                    return user ? user.name : "Unknown";
-                });
-                const asyncUsers = statusAvailableButNotCompletedDuringStandup.map((r) => {
                     const user = users.find((u) => u.id === r.userId);
                     return user ? user.name : "Unknown";
                 });
@@ -242,7 +235,7 @@ export class StandupGroupService {
                     attachments: [
                         {
                             contentType: "application/vnd.microsoft.card.adaptive",
-                            content: createStandupCard(completedUsers, asyncUsers, previousParkingLot),
+                            content: createStandupCard(completedUsers, previousParkingLot),
                         },
                     ],
                 });
@@ -264,7 +257,8 @@ export class StandupGroupService {
     async closeStandup(
         conversationId: string,
         tenantId: string,
-        toBeRestarted: boolean = false
+        send: (activity: any) => Promise<any>,
+        toBeRestarted: boolean = false,
     ): Promise<
         Result<{
             message: string;
@@ -278,7 +272,7 @@ export class StandupGroupService {
                 message: "No standup group registered.",
             };
         }
-
+        const activityId = await group.getActiveStandupActivityId();
         const responses = await group.closeStandup(toBeRestarted);
         if (toBeRestarted) {
             return {
@@ -307,14 +301,14 @@ export class StandupGroupService {
             };
         });
 
-        const persistResult = await group.persistStandup();
+        let message = "Standup closed and saved successfully.";
 
-        let message;
-        if (persistResult.type === "error") {
-            message = `Standup closed successfully, but failed to save to storage: ${persistResult.message}`;
-        } else {
-            message = "Standup closed and saved successfully.";
-        }
+        await send({
+            type: "message",
+            id: activityId,
+            text: `Standup is now closed`
+        });
+
         return {
             type: "success",
             data: {

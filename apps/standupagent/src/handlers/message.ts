@@ -92,11 +92,13 @@ export async function handleMessage(
     if (text.startsWith("!history")) {
       // Check if it's a history view command or history settings command
       if (text === "!history" || text.includes("view")) {
-        const result = await standup.getHistoricalStandups(
-          context.conversationId,
-          context.userId,
-          context.tenantId,
-          activity.conversation.conversationType !== "personal"
+        const result = await standup.getHistoricalStandups(activity.conversation.conversationType === 'personal' ? {
+          userId: context.userId,
+          tenantId: context.tenantId,
+        } : {
+          conversationId: context.conversationId,
+          tenantId: context.tenantId,
+        }
         );
         if (result.type === "error") {
           await partialContext.send(result.message);

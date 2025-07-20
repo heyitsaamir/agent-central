@@ -14,6 +14,7 @@ export async function executeStartStandup(
     const closeResult = await standup.closeStandup(
       conversationId,
       tenantId,
+      send,
       true
     );
     if (closeResult.type === "error") {
@@ -55,7 +56,7 @@ export async function executeCloseStandup(
 ) {
   const { send, conversationId, tenantId } = context;
 
-  const result = await standup.closeStandup(conversationId, tenantId);
+  const result = await standup.closeStandup(conversationId, tenantId, send);
   if (result.type === "error") {
     await send(result.message);
     return;

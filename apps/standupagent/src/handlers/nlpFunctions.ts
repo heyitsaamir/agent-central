@@ -121,11 +121,13 @@ export function registerGroupChatFunctions(
     nlpPrompt.function("viewHistory", "View historical standup information", async () => {
         try {
             console.log("Viewing standup history");
-            const result = await standup.getHistoricalStandups(
-                context.conversationId,
-                context.userId,
-                context.tenantId,
-                activity.conversation.isGroup ?? false
+            const result = await standup.getHistoricalStandups(activity.conversation.isGroup ? {
+                conversationId: context.conversationId,
+                tenantId: context.tenantId,
+            } : {
+                userId: context.userId,
+                tenantId: context.tenantId,
+            }
             );
 
             if (result.type === "error") {
@@ -394,11 +396,10 @@ export function registerPersonalChatFunctions(
     // Personal history
     nlpPrompt.function("viewPersonalHistory", "View your personal standup history", async () => {
         console.log("Viewing personal standup history");
-        const result = await standup.getHistoricalStandups(
-            context.conversationId,
-            context.userId,
-            context.tenantId,
-            false // This is a personal conversation
+        const result = await standup.getHistoricalStandups({
+            userId: context.userId,
+            tenantId: context.tenantId,
+        }
         );
 
         if (result.type === "error") {

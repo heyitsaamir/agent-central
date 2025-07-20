@@ -73,9 +73,10 @@ export class StandupCoordinator {
   async closeStandup(
     conversationId: string,
     tenantId: string,
-    toBeRestarted: boolean = false
+    send: (activity: any) => Promise<any>,
+    toBeRestarted: boolean = false,
   ): Promise<Result<{ message: string; summary?: IAdaptiveCard }>> {
-    return await this.groupService.closeStandup(conversationId, tenantId, toBeRestarted);
+    return await this.groupService.closeStandup(conversationId, tenantId, send, toBeRestarted,);
   }
 
   async validateGroup(
@@ -301,11 +302,13 @@ export class StandupCoordinator {
   // === CROSS-SERVICE OPERATIONS ===
   // These methods coordinate between both services
 
-  async getHistoricalStandups(
-    conversationId: string,
-    userId: string,
-    tenantId: string,
-    isGroup: boolean
+  async getHistoricalStandups(options: {
+    conversationId: string;
+    tenantId: string;
+  } | {
+    userId: string;
+    tenantId: string;
+  }
   ): Promise<
     Result<{
       histories: Array<{
@@ -320,12 +323,12 @@ export class StandupCoordinator {
       }>;
     }>
   > {
-    if (isGroup) {
+    if ('conversationId' in options) {
       // For group history, use the group service
-      return await this.groupService.getGroupHistoricalStandups(conversationId, tenantId);
+      return await this.groupService.getGroupHistoricalStandups(options.conversationId, options.tenantId);
     } else {
       // For personal history, use the user service
-      return await this.userService.getPersonalHistoricalStandups(userId, tenantId);
+      return await this.userService.getPersonalHistoricalStandups(options.userId, options.tenantId);
     }
   }
 }

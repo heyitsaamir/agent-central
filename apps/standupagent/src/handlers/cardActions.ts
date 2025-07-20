@@ -142,7 +142,8 @@ export async function handleCardAction(
       // Close the standup
       const result = await standup.closeStandup(
         conversationId,
-        activity.conversation.tenantId || "unknown"
+        activity.conversation.tenantId || "unknown",
+        send
       );
       const message =
         result.type === "success" ? result.data.message : result.message;
