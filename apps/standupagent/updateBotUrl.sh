@@ -1,8 +1,8 @@
 #!/bin/bash
 
-BOT_NAME="standupagent"
-RESOURCE_GROUP="standupagent"
-REMOTE_URL="https://standupagent.azurewebsites.net/api/messages"
+BOT_NAME="standupagentacc"
+RESOURCE_GROUP="standupagent-rg"
+REMOTE_URL="https://standupagentapp-1752861559.azurewebsites.net/api/messages"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do

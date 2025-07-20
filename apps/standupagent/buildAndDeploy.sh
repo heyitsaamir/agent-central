@@ -1,7 +1,7 @@
 echo "Logging in to Azure and ACR..."
-ACR_NAME="standupagentacr2"
-RESOURCE_GROUP="standupagent"
-WEBAPP_NAME="standupagentapp"
+ACR_NAME="standupagentacr1752861313"
+RESOURCE_GROUP="standupagent-rg"
+WEBAPP_NAME="standupagentapp-1752861559"
 # Login to Azure
 az acr login --name $ACR_NAME
 
@@ -23,4 +23,4 @@ az webapp config container set \
 
 echo "Restarting Azure Web App..."
 # Restart the web app
-az webapp restart --name $WEBAPP_NAME --resource-group standupagent
+az webapp restart --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
