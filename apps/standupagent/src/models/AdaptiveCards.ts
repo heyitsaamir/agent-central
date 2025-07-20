@@ -195,7 +195,6 @@ export function createStandupSummaryCard(
 export function createStandupCard(
   completedResponses: string[] = [],
   previousParkingLot?: string[],
-  excludeActions: boolean = false
 ): IAdaptiveCard {
   const previousParkingLotItems = previousParkingLot
     ?.flatMap((p) => p.split("\n").map((p) => p.trim()))
@@ -263,7 +262,7 @@ export function createStandupCard(
           ),
         ]
         : []),
-      ...(excludeActions ? [] : [{
+      {
         type: "ActionSet",
         actions: [
           new TaskFetchAction({})
@@ -279,7 +278,7 @@ export function createStandupCard(
               previousParkingLot: JSON.stringify(previousParkingLotItems),
             }),
         ],
-      } satisfies IActionSet]),
+      },
     ],
   };
 }
