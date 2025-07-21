@@ -13,6 +13,19 @@ import {
 } from "@microsoft/teams.cards";
 import { StandupResponse, User } from "./types";
 
+
+
+const listForamtter = new Intl.ListFormat("en", {
+  style: "long",
+  type: "conjunction",
+});
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
 export const SPECIAL_STRINGS = {
   fromPreviousParkingLot: "(from previous parking lot)",
   addedByPrefix: "(added by",
@@ -46,12 +59,7 @@ export function createStandupSummaryCard(
     parkingLot?: string;
   }>
 ): IAdaptiveCard {
-  const date = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const date = dateFormatter.format(new Date())
 
   const parkingLotItems = responses
     .filter((r) => r.parkingLot && r.parkingLot.trim() !== "")
@@ -190,6 +198,52 @@ export function createStandupSummaryCard(
   };
 
   return card;
+}
+
+const funEmojis = [
+  "😄",  // smiling face with open mouth
+  "😎",  // smiling face with sunglasses
+  "🥳",  // partying face
+  "🤩",  // star-struck
+  "😂",  // face with tears of joy
+  "🙌",  // raising hands
+  "🎉",  // party popper
+  "🕺",  // man dancing
+  "💃",  // woman dancing
+  "🦄",  // unicorn
+  "🌈",  // rainbow
+  "🍕",  // pizza
+  "🍦",  // ice cream
+  "🚀",  // rocket
+  "✨",  // sparkles
+  "🔥",  // fire
+  "🎮",  // video game
+  "🎈",  // balloon
+  "🥰",  // smiling face with hearts
+  "🤖"   // robot
+]
+
+export function createClosedStandupCard(users: User[]): IAdaptiveCard {
+  const userNames = listForamtter.format(users.map((user) => user.name));
+  const randomEmoji = funEmojis[Math.floor(Math.random() * funEmojis.length)];
+  const formattedDate = dateFormatter.format(new Date());
+  return {
+    "type": "AdaptiveCard",
+    "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.5",
+    "body": [
+      {
+        "type": "TextBlock",
+        "text": `${randomEmoji} Standup closed for ${formattedDate}`,
+        "wrap": true
+      },
+      {
+        "type": "TextBlock",
+        "text": `${users.length} responses from ${userNames}`,
+        "wrap": true
+      }
+    ]
+  }
 }
 
 export function createStandupCard(
@@ -499,12 +553,7 @@ export function createHistoricalStandupsCard(
           items: [
             {
               type: "TextBlock" as const,
-              text: history.date.toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }),
+              text: dateFormatter.format(history.date),
               wrap: true,
               style: "heading" as const,
             } satisfies ITextBlock,

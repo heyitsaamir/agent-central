@@ -1,5 +1,5 @@
 import { IAdaptiveCard } from "@microsoft/teams.cards";
-import { createStandupCard, createStandupSummaryCard } from "../models/AdaptiveCards";
+import { createClosedStandupCard, createStandupCard, createStandupSummaryCard } from "../models/AdaptiveCards";
 import { StandupGroup } from "../models/StandupGroup";
 import { Result, StandupResponse, User } from "../models/types";
 import { PersistentStandupService } from "./PersistentStandupService";
@@ -306,7 +306,12 @@ export class StandupGroupService {
         await send({
             type: "message",
             id: activityId,
-            text: `Standup is now closed`
+            attachments: [
+                {
+                    contentType: "application/vnd.microsoft.card.adaptive",
+                    content: createClosedStandupCard(users),
+                },
+            ],
         });
 
         return {
