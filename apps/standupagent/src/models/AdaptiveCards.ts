@@ -481,6 +481,7 @@ export function createTaskModule(
         isRequired: true,
         style: "Text",
         value: existingResponse?.completedWork,
+        errorMessage: "Got nothing done? Just say so! 😄",
       } satisfies ITextInput,
       {
         type: "TextBlock" as const,
@@ -495,6 +496,7 @@ export function createTaskModule(
         isRequired: true,
         style: "Text",
         value: existingResponse?.plannedWork,
+        errorMessage: "Got nothing planned? Just say so! 😄",
       } satisfies ITextInput,
       {
         type: "TextBlock" as const,
