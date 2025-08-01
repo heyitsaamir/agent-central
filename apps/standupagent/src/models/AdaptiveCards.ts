@@ -223,9 +223,29 @@ const funEmojis = [
   "🤖"   // robot
 ]
 
-export function createClosedStandupCard(users: User[]): IAdaptiveCard {
-  const userNames = listForamtter.format(users.map((user) => user.name));
+const genZGreeting = [
+  "Slay!",
+  "Fire 🔥",
+  "Let’s gooo!",
+  "That’s lit!",
+  "So valid",
+  "It’s giving 👏",
+  "Vibes 💯",
+  "No cap, that’s amazing",
+  "W",
+  "That hits different",
+  "Chef’s kiss 👨‍🍳💋",
+  "Periodt.",
+  "Big mood",
+  "That’s a serve",
+  "Goated"
+]
+
+export function createClosedStandupCard(responses: StandupResponse[], allStandupUsers: User[]): IAdaptiveCard {
+  const users = Array.from(new Set(responses.map(r => r.userId))).map(u => allStandupUsers.find(user => user.id === u)).filter((u): u is User => !!u)
+  const userNames = listForamtter.format(users.map(u => u.name));
   const randomEmoji = funEmojis[Math.floor(Math.random() * funEmojis.length)];
+  const randomGreeting = genZGreeting[Math.floor(Math.random() * genZGreeting.length)];
   const formattedDate = dateFormatter.format(new Date());
   return {
     "type": "AdaptiveCard",
@@ -234,8 +254,15 @@ export function createClosedStandupCard(users: User[]): IAdaptiveCard {
     "body": [
       {
         "type": "TextBlock",
-        "text": `${randomEmoji} Standup closed for ${formattedDate}`,
-        "wrap": true
+        "text": `${randomEmoji} ${randomGreeting}`,
+        "wrap": true,
+        "weight": "Bolder",
+        "size": "Large"
+      },
+      {
+        "type": "TextBlock",
+        "text": `Standup closed for ${formattedDate}`,
+        "wrap": true,
       },
       {
         "type": "TextBlock",
@@ -270,22 +297,13 @@ export function createStandupCard(
         text: "Enter your details by clicking the button below.",
         wrap: true,
       },
-      ...(completedResponses.length > 0
-        ? [
-          {
-            type: "TextBlock" as const,
-            text: `✅ Completed`,
-            wrap: true,
-            spacing: "Medium" as const,
-          },
-          {
-            type: "TextBlock" as const,
-            text: `${completedResponses.join(", ")}`,
-            wrap: true,
-            spacing: "None" as const,
-          },
-        ]
-        : []),
+      ...(completedResponses.map(c => ({
+        type: "TextBlock" as const,
+        text: `✅ ${c}`,
+        wrap: true,
+        spacing: "Small" as const,
+      } satisfies ITextBlock
+      ))),
       ...(previousParkingLotItems && previousParkingLotItems.length > 0
         ? [
           {

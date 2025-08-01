@@ -302,7 +302,6 @@ export class StandupGroupService {
         });
 
         let message = "Standup closed and saved successfully.";
-        const respondedUsers = Array.from(new Set(responses.map(r => r.userId))).map(u => users.find(user => user.id === u)).filter((u): u is User => !!u)
 
         await send({
             type: "message",
@@ -310,7 +309,7 @@ export class StandupGroupService {
             attachments: [
                 {
                     contentType: "application/vnd.microsoft.card.adaptive",
-                    content: createClosedStandupCard(respondedUsers),
+                    content: createClosedStandupCard(responses, users),
                 },
             ],
         });
