@@ -40,6 +40,17 @@ provision:
         channels:
             - name: msteams
 
+  # Create OAuth connection for GitHub authentication
+  - uses: oauth/register
+    with:
+        name: github-oauth
+        clientId: ${{GITHUB_CLIENT_ID}}
+        clientSecret: ${{SECRET_GITHUB_CLIENT_SECRET}}
+        authorizationUrl: https://github.com/login/oauth/authorize
+        tokenUrl: https://github.com/login/oauth/access_token
+        scopes: "read:user,user:email,repo"
+        botId: ${{BOT_ID}}
+
   # Optional: Automates schema and error checking of the Teams app manifest and outputs the results in the console.
   - uses: teamsApp/validateManifest
     with:
