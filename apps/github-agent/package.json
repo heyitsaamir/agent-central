@@ -26,7 +26,8 @@
     "@microsoft/teams.dev": "preview",
     "@microsoft/teams.graph": "preview",
     "@microsoft/teams.mcpclient": "^2.0.0-preview.8",
-    "@microsoft/teams.openai": "^2.0.0-preview.8"
+    "@microsoft/teams.openai": "^2.0.0-preview.8",
+    "@modelcontextprotocol/sdk": "^1.17.1"
   },
   "devDependencies": {
     "@types/node": "^22.5.4",
