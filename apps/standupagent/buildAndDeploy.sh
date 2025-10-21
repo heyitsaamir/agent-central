@@ -1,7 +1,7 @@
 echo "Logging in to Azure and ACR..."
-ACR_NAME="standupagentacr1752861313"
-RESOURCE_GROUP="standupagent-rg"
-WEBAPP_NAME="standupagentapp-1752861559"
+ACR_NAME="standupagentacr1761020070"
+RESOURCE_GROUP="aamir-rg"
+WEBAPP_NAME="standupagent"
 # Login to Azure
 az acr login --name $ACR_NAME
 
@@ -14,12 +14,12 @@ docker push $ACR_NAME.azurecr.io/standupagent:latest
 echo "Deploying to Azure Web App..."
 # Update the web app to use container
 az webapp config container set \
-  --name $WEBAPP_NAME \
-  --resource-group $RESOURCE_GROUP \
-  --docker-custom-image-name $ACR_NAME.azurecr.io/standupagent:latest \
-  --docker-registry-server-url https://$ACR_NAME.azurecr.io \
-  --docker-registry-server-user $(az acr credential show --name $ACR_NAME --query "username" -o tsv) \
-  --docker-registry-server-password $(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
+    --name $WEBAPP_NAME \
+    --resource-group $RESOURCE_GROUP \
+    --docker-custom-image-name $ACR_NAME.azurecr.io/standupagent:latest \
+    --docker-registry-server-url https://$ACR_NAME.azurecr.io \
+    --docker-registry-server-user $(az acr credential show --name $ACR_NAME --query "username" -o tsv) \
+    --docker-registry-server-password $(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
 
 echo "Restarting Azure Web App..."
 # Restart the web app

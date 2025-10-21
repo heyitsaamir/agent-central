@@ -18,7 +18,7 @@
       "id": "appSelect",
       "description": "Select the app to launch",
       "type": "pickString",
-      "options": ["standupagent", "supportagent", "teamagent"]
+      "options": ["standupagent", "supportagent", "teamagent", "github-agent"]
     }
   ]
 }

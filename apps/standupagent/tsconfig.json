@@ -16,7 +16,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "pretty": true,
-    "outDir": "dist",
+    "outDir": "dist/src",
     "rootDir": "src",
     "types": ["node"]
   },
