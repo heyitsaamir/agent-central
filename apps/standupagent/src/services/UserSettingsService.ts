@@ -1,5 +1,5 @@
 import { UserSettings, UserSettingsManager } from "../models/UserSettings";
-import { IStorage } from "./CosmosStorage";
+import { IStorage } from "./MongoStorage";
 
 export interface UserSettingsStorageItem extends UserSettings {
     id: string;

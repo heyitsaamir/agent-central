@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { BaseStorageItem, IStorage } from "./CosmosStorage";
+import { BaseStorageItem, IStorage } from "./MongoStorage";
 
 export class FileStorage<
   TKey extends string | number = string,

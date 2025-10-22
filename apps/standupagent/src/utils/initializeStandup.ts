@@ -6,18 +6,18 @@ let standupInstance: StandupCoordinator | null = null;
 export async function ensureStandupInitialized(): Promise<Result<StandupCoordinator>> {
   if (!standupInstance) {
     try {
-      const cosmosConnectionString = process.env.COSMOS_CONNECTION_STRING;
-      if (!cosmosConnectionString) {
+      const mongoConnectionString = process.env.MONGO_CONNECTION_STRING || process.env.COSMOS_CONNECTION_STRING;
+      if (!mongoConnectionString) {
         console.error(
-          "Error: COSMOS_CONNECTION_STRING environment variable not set"
+          "Error: MONGO_CONNECTION_STRING environment variable not set"
         );
         return {
           type: "error",
-          message: "COSMOS_CONNECTION_STRING environment variable not set",
+          message: "MONGO_CONNECTION_STRING environment variable not set",
         };
       }
       const initializingStandup = new StandupCoordinator();
-      await initializingStandup.initialize(cosmosConnectionString);
+      await initializingStandup.initialize(mongoConnectionString);
       standupInstance = initializingStandup;
       console.log("Standup initialized successfully!");
       return {

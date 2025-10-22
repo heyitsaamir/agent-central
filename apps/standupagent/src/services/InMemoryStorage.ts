@@ -1,4 +1,4 @@
-import { BaseStorageItem, IStorage } from "./CosmosStorage";
+import { BaseStorageItem, IStorage } from "./MongoStorage";
 
 export class InMemoryStorage<
   TKey extends string | number = string,

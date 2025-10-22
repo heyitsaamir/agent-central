@@ -1,11 +1,11 @@
 import { StandupGroup } from "../models/StandupGroup";
 import {
-  CosmosStorageFactory,
+  MongoStorageFactory,
   GroupStorageItem,
   HistoryStorageItem,
   IStorage,
   StandupSummary,
-} from "./CosmosStorage";
+} from "./MongoStorage";
 import { FileStorageFactory } from "./FileStorage";
 import { InMemoryStorageFactory } from "./InMemoryStorage";
 import { IStandupStorage, NoStorage } from "./Storage";
@@ -41,17 +41,17 @@ export class PersistentStandupService {
 
   async initialize(connectionString: string) {
     let factory:
-      | typeof CosmosStorageFactory
+      | typeof MongoStorageFactory
       | typeof InMemoryStorageFactory
-      | typeof FileStorageFactory = CosmosStorageFactory;
+      | typeof FileStorageFactory = MongoStorageFactory;
     if (useLocalStorage) {
       factory = InMemoryStorageFactory;
     } else if (useFileStorage) {
       factory = FileStorageFactory;
       factory.initialize();
     } else {
-      // Initialize the CosmosDB client
-      factory.initialize(connectionString);
+      // Initialize the MongoDB client
+      await factory.initialize(connectionString);
     }
 
     // Get storage instances for groups and history
@@ -135,7 +135,7 @@ export class PersistentStandupService {
   }
 
   private async wrapGroupData(group: StandupGroup): Promise<StandupGroup> {
-    // Get the initial state to store in CosmosDB
+    // Get the initial state to store in MongoDB
     const [
       users,
       startedAt,

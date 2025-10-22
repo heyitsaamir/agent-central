@@ -4,26 +4,13 @@ import { handleCardAction } from "./handlers/cardActions";
 import { handleDialogOpen, handleDialogSubmit } from "./handlers/dialog";
 import { handleMessage } from "./handlers/message";
 import { ensureStandupInitialized } from "./utils/initializeStandup";
-import { ManagedIdentityCredential } from '@azure/identity'
+import { getToken } from "./utils/tokenRetrieval";
 
 const PORT = +(process.env.PORT || 3000);
 
-const createTokenFactory = () => {
-    return async (scope: string | string[], tenantId?: string): Promise<string> => {
-        const managedIdentityCredential = new ManagedIdentityCredential({
-            clientId: process.env.MANAGED_IDENTITY_CLIENT_ID
-        });
-        const scopes = Array.isArray(scope) ? scope : [scope];
-        const tokenResponse = await managedIdentityCredential.getToken(scopes, {
-            tenantId: tenantId
-        });
-
-        return tokenResponse.token;
-    };
-};
 
 const app = new App({
-    token: createTokenFactory()
+    token: getToken
 });
 
 // Handle incoming messages

@@ -1,5 +1,5 @@
 import { Result } from "../models/types";
-import { BaseStorageItem, CosmosStorageFactory, IStorage } from "./CosmosStorage";
+import { BaseStorageItem, MongoStorageFactory, IStorage } from "./MongoStorage";
 import { FileStorageFactory } from "./FileStorage";
 import { InMemoryStorageFactory } from "./InMemoryStorage";
 import { StandupGroupService } from "./StandupGroupService";
@@ -18,7 +18,7 @@ export class UserStandupService {
         }
     }
 
-    async initialize(cosmosConnectionString: string, groupService?: StandupGroupService): Promise<void> {
+    async initialize(mongoConnectionString: string, groupService?: StandupGroupService): Promise<void> {
         // Set group service if provided during initialization
         if (groupService) {
             this.groupService = groupService;
@@ -37,8 +37,8 @@ export class UserStandupService {
         } else if (useFileStorage) {
             factory = FileStorageFactory.getStorage;
         } else {
-            CosmosStorageFactory.initialize(cosmosConnectionString);
-            factory = CosmosStorageFactory.getStorage
+            await MongoStorageFactory.initialize(mongoConnectionString);
+            factory = MongoStorageFactory.getStorage
         }
 
         const userSettingsStorage: IStorage<string, UserSettingsStorageItem> = await factory(
