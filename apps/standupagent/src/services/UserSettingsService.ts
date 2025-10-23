@@ -84,7 +84,8 @@ export class UserSettingsService implements UserSettingsManager {
     async setDefaultStandup(userId: string, tenantId: string, standupGroupId: string): Promise<void> {
         const settings = await this.getUserSettings(userId, tenantId);
         if (!settings) {
-            throw new Error("User settings not found. Please join a standup group first.");
+            await this.addStandupGroup(userId, tenantId, standupGroupId)
+            return
         }
 
         if (!settings.standupGroups.includes(standupGroupId)) {
