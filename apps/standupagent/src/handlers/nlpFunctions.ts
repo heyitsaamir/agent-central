@@ -100,6 +100,34 @@ export function registerGroupChatFunctions(
         }
     );
 
+    nlpPrompt.function("setSpecialCustomInstruction", "Set a special custom instruction for agent to say when the standup closes",
+        {
+            type: "object",
+            properties: {
+                customInstruction: {
+                    type: "string",
+                    description: "The custom instruction that the agent should follow when the standup closes.",
+                },
+            },
+            required: ["item"],
+        },
+        async (args: { customInstruction: string }) => {
+
+            const { customInstruction } = args;
+            console.log(`Updating custom instruction to ${customInstruction}`);
+            const group = await standup.validateGroup(
+                context.conversationId,
+                context.tenantId
+            );
+            if (!group) {
+                return "No standup group registered. Use !register <onenote-link> to create one.";
+            }
+
+            await group.setCustomInstructions(customInstruction);
+            return `Custom instruction '${customInstruction}' was saved successfully!`;
+        }
+    );
+
     nlpPrompt.function("checkHistory", "Check the current history saving setting", async () => {
         console.log("Checking history setting");
         const group = await standup.validateGroup(
@@ -237,10 +265,7 @@ export function registerPersonalChatFunctions(
     nlpPrompt: ChatPrompt,
     context: CommandContext,
     standup: StandupCoordinator,
-    messageContext: MessageContext,
-    activity: IMessageActivity,
-    text: string
-): void {
+    messageContext: MessageContext): void {
     // User settings functions
     nlpPrompt.function("viewSettings", "Show your standup settings", async () => {
         console.log("Viewing user settings");

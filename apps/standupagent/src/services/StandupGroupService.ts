@@ -5,6 +5,15 @@ import { Result, StandupResponse, User } from "../models/types";
 import { PersistentStandupService } from "./PersistentStandupService";
 import { StandupGroupManager } from "./StandupGroupManager";
 import { IStandupStorage } from "./Storage";
+import { ChatPrompt } from "@microsoft/teams.ai";
+import { buildChatPromptModel } from "../utils/chatPromptModel";
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: 'America/Los_Angeles'
+});
 
 export class StandupGroupService {
     private persistentService: PersistentStandupService;
@@ -21,10 +30,10 @@ export class StandupGroupService {
 
     async registerGroup(
         conversationId: string,
-        storage: IStandupStorage,
-        creator: User,
+        _storage: IStandupStorage,
+        _creator: User,
         tenantId: string,
-        includeHistory: boolean = true
+        _includeHistory: boolean = true
     ): Promise<Result<{ message: string }>> {
         const existingGroup = await this.persistentService.loadGroup(
             conversationId,
@@ -37,13 +46,6 @@ export class StandupGroupService {
             };
         }
 
-        const group = await this.groupManager.createGroup(
-            conversationId,
-            storage,
-            creator,
-            tenantId,
-            includeHistory
-        );
         return {
             type: "success",
             data: { message: "Standup group registered successfully!" },
@@ -314,11 +316,34 @@ export class StandupGroupService {
             ],
         });
 
+        const customInstructions = await group.getCustomInstructions();
+        let extraMessage: string | undefined;
+        if (customInstructions) {
+            const date = dateFormatter.format(new Date())
+            const instructions = `Today's date is ${date}.
+You are a standup agent who has just wrapped up standup. As part of ending the standup, the group has this special instruction for you:
+<INSTRUCTION>
+${customInstructions}.
+</INSTRUCTION>
+
+It's possible that there is no output that is warranted. When that happens, simply say "NOTHING_TO_SAY". Otherwise, reply in a formal tone.`
+            const result = await new ChatPrompt({
+                instructions,
+                model: buildChatPromptModel()
+            }).send('What is the message, if any, for the users?');
+            if (result.content && !result.content.includes('NOTHING_TO_SAY')) {
+                extraMessage = result.content
+            } else {
+                console.log(`Nothing produced ${result.content}`)
+            }
+        } else {
+            console.log('No custom instructinos')
+        }
         return {
             type: "success",
             data: {
                 message,
-                summary: createStandupSummaryCard(formattedResponses),
+                summary: createStandupSummaryCard(formattedResponses, extraMessage),
             },
             message,
         };
@@ -378,7 +403,6 @@ export class StandupGroupService {
                     "No standup group registered. Use !register <onenote-link> to create one.",
             };
         }
-        const responses = await group.getActiveResponses();
         await group.clearParkingLot(userId);
         return {
             type: "success",

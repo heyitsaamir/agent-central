@@ -1,693 +1,702 @@
 import {
-  AdaptiveCard,
-  CardElementArray,
-  ExecuteAction,
-  IActionSet,
-  IAdaptiveCard,
-  ITextBlock,
-  ITextInput,
-  SubmitAction,
-  TaskFetchAction,
-  TaskFetchData,
-  ToggleInput,
+    AdaptiveCard,
+    CardElementArray,
+    ExecuteAction,
+    IActionSet,
+    IAdaptiveCard,
+    ITextBlock,
+    ITextInput,
+    SubmitAction,
+    TaskFetchAction,
+    TaskFetchData,
+    ToggleInput,
 } from "@microsoft/teams.cards";
 import { StandupResponse, User } from "./types";
 
 
 
 const listForamtter = new Intl.ListFormat("en", {
-  style: "long",
-  type: "conjunction",
+    style: "long",
+    type: "conjunction",
 });
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
 });
 
 export const SPECIAL_STRINGS = {
-  fromPreviousParkingLot: "(from previous parking lot)",
-  addedByPrefix: "(added by",
+    fromPreviousParkingLot: "(from previous parking lot)",
+    addedByPrefix: "(added by",
 };
 
 const convertTextToMarkdownList = (text: string, userName?: string): string => {
-  return text
-    .trim()
-    .split("\n")
-    .map((item) => item.trim())
-    .map((item) => {
-      // Remove any leading hyphens or asterisks even
-      const cleanedItem = item.replace(/^[\-\*]\s*/, "");
-      return cleanedItem;
-    })
-    .map((item) => {
-      if (userName == null || item.includes(SPECIAL_STRINGS.addedByPrefix)) {
-        return `- ${item}`;
-      }
+    return text
+        .trim()
+        .split("\n")
+        .map((item) => item.trim())
+        .map((item) => {
+            // Remove any leading hyphens or asterisks even
+            const cleanedItem = item.replace(/^[\-\*]\s*/, "");
+            return cleanedItem;
+        })
+        .map((item) => {
+            if (userName == null || item.includes(SPECIAL_STRINGS.addedByPrefix)) {
+                return `- ${item}`;
+            }
 
-      return `- ${item} (added by ${userName})`;
-    })
-    .join("\n");
+            return `- ${item} (added by ${userName})`;
+        })
+        .join("\n");
 };
 
 export function createStandupSummaryCard(
-  responses: Array<{
-    userName: string;
-    completedWork: string;
-    plannedWork: string;
-    parkingLot?: string;
-  }>
+    responses: Array<{
+        userName: string;
+        completedWork: string;
+        plannedWork: string;
+        parkingLot?: string;
+    }>,
+    extraMessage?: string
 ): IAdaptiveCard {
-  const date = dateFormatter.format(new Date())
+    const date = dateFormatter.format(new Date())
 
-  const parkingLotItems = responses
-    .filter((r) => r.parkingLot && r.parkingLot.trim() !== "")
-    .map((r) =>
-      convertTextToMarkdownList(r.parkingLot || "", r.userName).trim()
-    )
-    .join("\n");
+    const parkingLotItems = responses
+        .filter((r) => r.parkingLot && r.parkingLot.trim() !== "")
+        .map((r) =>
+            convertTextToMarkdownList(r.parkingLot || "", r.userName).trim()
+        )
+        .join("\n");
 
-  const card: IAdaptiveCard = {
-    type: "AdaptiveCard",
-    $schema: "https://adaptivecards.io/schemas/adaptive-card.json",
-    version: "1.5",
-    body: [
-      {
-        type: "ColumnSet",
-        columns: [
-          {
-            type: "Column",
-            width: "stretch",
-            items: [
-              {
-                type: "TextBlock" as const,
-                text: "**Standup**",
-                wrap: true,
-                style: "heading",
-              },
-            ],
-          },
-          {
-            type: "Column",
-            width: "auto",
-            items: [
-              {
-                type: "TextBlock" as const,
-                text: date,
-                wrap: true,
-              },
-            ],
-          },
+    const card: IAdaptiveCard = {
+        type: "AdaptiveCard",
+        $schema: "https://adaptivecards.io/schemas/adaptive-card.json",
+        version: "1.5",
+        body: [
+            {
+                type: "ColumnSet",
+                columns: [
+                    {
+                        type: "Column",
+                        width: "stretch",
+                        items: [
+                            {
+                                type: "TextBlock" as const,
+                                text: "**Standup**",
+                                wrap: true,
+                                style: "heading",
+                            },
+                        ],
+                    },
+                    {
+                        type: "Column",
+                        width: "auto",
+                        items: [
+                            {
+                                type: "TextBlock" as const,
+                                text: date,
+                                wrap: true,
+                            },
+                        ],
+                    },
+                ],
+            },
+            ...responses.flatMap((response): CardElementArray => [
+                {
+                    type: "TextBlock" as const,
+                    text: `**${response.userName}**`,
+                    wrap: true,
+                    separator: true,
+                },
+                {
+                    type: "Table",
+                    columns: [
+                        {
+                            type: "Column" as const,
+                            width: 2,
+                        },
+                        {
+                            type: "Column",
+                            width: 6,
+                        },
+                    ],
+                    rows: [
+                        {
+                            type: "TableRow" as const,
+                            cells: [
+                                {
+                                    type: "TableCell" as const,
+                                    items: [
+                                        {
+                                            type: "TextBlock" as const,
+                                            text: "Yesterday",
+                                            wrap: true,
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: "TableCell" as const,
+                                    items: [
+                                        {
+                                            type: "TextBlock" as const,
+                                            text: convertTextToMarkdownList(response.completedWork),
+                                            wrap: true,
+                                            weight: "Lighter",
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            type: "TableRow" as const,
+                            cells: [
+                                {
+                                    type: "TableCell" as const,
+                                    items: [
+                                        {
+                                            type: "TextBlock" as const,
+                                            text: "Today",
+                                            wrap: true,
+                                            style: "columnHeader",
+                                            weight: "Bolder",
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: "TableCell" as const,
+                                    items: [
+                                        {
+                                            type: "TextBlock" as const,
+                                            text: convertTextToMarkdownList(response.plannedWork),
+                                            wrap: true,
+                                            weight: "Lighter",
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                } as any,
+            ]),
+            ...(parkingLotItems.length > 0
+                ? [
+                    {
+                        type: "TextBlock" as const,
+                        text: "Parking Lot",
+                        wrap: true,
+                        style: "heading",
+                        separator: true,
+                    } satisfies ITextBlock,
+                    {
+                        type: "TextBlock" as const,
+                        text: parkingLotItems,
+                        wrap: true,
+                    } satisfies ITextBlock,
+                ]
+                : []),
+            ...(extraMessage ? [
+                {
+                    type: "TextBlock" as const,
+                    text: extraMessage,
+                    wrap: true,
+                    separator: true,
+                } satisfies ITextBlock,
+            ] : [])
         ],
-      },
-      ...responses.flatMap((response): CardElementArray => [
-        {
-          type: "TextBlock" as const,
-          text: `**${response.userName}**`,
-          wrap: true,
-          separator: true,
-        },
-        {
-          type: "Table",
-          columns: [
-            {
-              type: "Column" as const,
-              width: 2,
-            },
-            {
-              type: "Column",
-              width: 6,
-            },
-          ],
-          rows: [
-            {
-              type: "TableRow" as const,
-              cells: [
-                {
-                  type: "TableCell" as const,
-                  items: [
-                    {
-                      type: "TextBlock" as const,
-                      text: "Yesterday",
-                      wrap: true,
-                    },
-                  ],
-                },
-                {
-                  type: "TableCell" as const,
-                  items: [
-                    {
-                      type: "TextBlock" as const,
-                      text: convertTextToMarkdownList(response.completedWork),
-                      wrap: true,
-                      weight: "Lighter",
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: "TableRow" as const,
-              cells: [
-                {
-                  type: "TableCell" as const,
-                  items: [
-                    {
-                      type: "TextBlock" as const,
-                      text: "Today",
-                      wrap: true,
-                      style: "columnHeader",
-                      weight: "Bolder",
-                    },
-                  ],
-                },
-                {
-                  type: "TableCell" as const,
-                  items: [
-                    {
-                      type: "TextBlock" as const,
-                      text: convertTextToMarkdownList(response.plannedWork),
-                      wrap: true,
-                      weight: "Lighter",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        } as any,
-      ]),
-      ...(parkingLotItems.length > 0
-        ? [
-          {
-            type: "TextBlock" as const,
-            text: "Parking Lot",
-            wrap: true,
-            style: "heading",
-            separator: true,
-          } satisfies ITextBlock,
-          {
-            type: "TextBlock" as const,
-            text: parkingLotItems,
-            wrap: true,
-          } satisfies ITextBlock,
-        ]
-        : []),
-    ],
-  };
+    };
 
-  return card;
+    return card;
 }
 
 const funEmojis = [
-  "😄",  // smiling face with open mouth
-  "😎",  // smiling face with sunglasses
-  "🥳",  // partying face
-  "🤩",  // star-struck
-  "😂",  // face with tears of joy
-  "🙌",  // raising hands
-  "🎉",  // party popper
-  "🕺",  // man dancing
-  "💃",  // woman dancing
-  "🦄",  // unicorn
-  "🌈",  // rainbow
-  "🍕",  // pizza
-  "🍦",  // ice cream
-  "🚀",  // rocket
-  "✨",  // sparkles
-  "🔥",  // fire
-  "🎮",  // video game
-  "🎈",  // balloon
-  "🥰",  // smiling face with hearts
-  "🤖"   // robot
+    "😄",  // smiling face with open mouth
+    "😎",  // smiling face with sunglasses
+    "🥳",  // partying face
+    "🤩",  // star-struck
+    "😂",  // face with tears of joy
+    "🙌",  // raising hands
+    "🎉",  // party popper
+    "🕺",  // man dancing
+    "💃",  // woman dancing
+    "🦄",  // unicorn
+    "🌈",  // rainbow
+    "🍕",  // pizza
+    "🍦",  // ice cream
+    "🚀",  // rocket
+    "✨",  // sparkles
+    "🔥",  // fire
+    "🎮",  // video game
+    "🎈",  // balloon
+    "🥰",  // smiling face with hearts
+    "🤖"   // robot
 ]
 
 const genZGreeting = [
-  "Slay!",
-  "Fire 🔥",
-  "Let’s gooo!",
-  "That’s lit!",
-  "So valid",
-  "It’s giving 👏",
-  "Vibes 💯",
-  "No cap, that’s amazing",
-  "W",
-  "That hits different",
-  "Chef’s kiss 👨‍🍳💋",
-  "Periodt.",
-  "Big mood",
-  "That’s a serve",
-  "Goated"
+    "Slay!",
+    "Fire 🔥",
+    "Let’s gooo!",
+    "That’s lit!",
+    "So valid",
+    "It’s giving 👏",
+    "Vibes 💯",
+    "No cap, that’s amazing",
+    "W",
+    "That hits different",
+    "Chef’s kiss 👨‍🍳💋",
+    "Periodt.",
+    "Big mood",
+    "That’s a serve",
+    "Goated"
 ]
 
 export function createClosedStandupCard(responses: StandupResponse[], allStandupUsers: User[]): IAdaptiveCard {
-  const users = Array.from(new Set(responses.map(r => r.userId))).map(u => allStandupUsers.find(user => user.id === u)).filter((u): u is User => !!u)
-  const userNames = listForamtter.format(users.map(u => u.name));
-  const randomEmoji = funEmojis[Math.floor(Math.random() * funEmojis.length)];
-  const randomGreeting = genZGreeting[Math.floor(Math.random() * genZGreeting.length)];
-  const formattedDate = dateFormatter.format(new Date());
-  return {
-    "type": "AdaptiveCard",
-    "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
-    "version": "1.5",
-    "body": [
-      {
-        "type": "TextBlock",
-        "text": `${randomEmoji} ${randomGreeting}`,
-        "wrap": true,
-        "weight": "Bolder",
-        "size": "Large"
-      },
-      {
-        "type": "TextBlock",
-        "text": `Standup closed for ${formattedDate}`,
-        "wrap": true,
-      },
-      {
-        "type": "TextBlock",
-        "text": `${users.length} responses from ${userNames}`,
-        "wrap": true
-      }
-    ]
-  }
+    const users = Array.from(new Set(responses.map(r => r.userId))).map(u => allStandupUsers.find(user => user.id === u)).filter((u): u is User => !!u)
+    const userNames = listForamtter.format(users.map(u => u.name));
+    const randomEmoji = funEmojis[Math.floor(Math.random() * funEmojis.length)];
+    const randomGreeting = genZGreeting[Math.floor(Math.random() * genZGreeting.length)];
+    const formattedDate = dateFormatter.format(new Date());
+    return {
+        "type": "AdaptiveCard",
+        "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
+        "version": "1.5",
+        "body": [
+            {
+                "type": "TextBlock",
+                "text": `${randomEmoji} ${randomGreeting}`,
+                "wrap": true,
+                "weight": "Bolder",
+                "size": "Large"
+            },
+            {
+                "type": "TextBlock",
+                "text": `Standup closed for ${formattedDate}`,
+                "wrap": true,
+            },
+            {
+                "type": "TextBlock",
+                "text": `${users.length} responses from ${userNames}`,
+                "wrap": true
+            }
+        ]
+    }
 }
 
 export function createStandupCard(
-  completedResponses: string[] = [],
-  previousParkingLot?: string[],
+    completedResponses: string[] = [],
+    previousParkingLot?: string[],
 ): IAdaptiveCard {
-  const previousParkingLotItems = previousParkingLot
-    ?.flatMap((p) => p.split("\n").map((p) => p.trim()))
-    ?.filter((p) => p.trim() !== "")
-    .map((p) => convertTextToMarkdownList(p));
-  return {
-    type: "AdaptiveCard",
-    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-    version: "1.5",
-    body: [
-      {
-        type: "TextBlock" as const,
-        text: "Standup Session",
-        size: "Large",
-        weight: "Bolder",
-      },
-      {
-        type: "TextBlock" as const,
-        text: "Enter your details by clicking the button below.",
-        wrap: true,
-      },
-      ...(completedResponses.map(c => ({
-        type: "TextBlock" as const,
-        text: `✅ ${c}`,
-        wrap: true,
-        spacing: "Small" as const,
-      } satisfies ITextBlock
-      ))),
-      ...(previousParkingLotItems && previousParkingLotItems.length > 0
-        ? [
-          {
-            type: "TextBlock" as const,
-            text: "Discussed Previous Parking Lot Items:",
-            wrap: true,
-            spacing: "Medium" as const,
-          },
-          {
-            type: "TextBlock",
-            text: "Uncheck the values that still need discussion",
-            wrap: true,
-            size: "Small",
-            weight: "Lighter",
-            isSubtle: true,
-            spacing: "None",
-          } satisfies ITextBlock,
-          ...previousParkingLotItems.map(
-            (item, index) =>
-              new ToggleInput(item, {
-                id: `parking_lot_${index}`,
-                value: `Discussed - ${item}`,
-                valueOff: `Not Discussed - ${item}`,
-                valueOn: `Discussed - ${item}`,
+    const previousParkingLotItems = previousParkingLot
+        ?.flatMap((p) => p.split("\n").map((p) => p.trim()))
+        ?.filter((p) => p.trim() !== "")
+        .map((p) => convertTextToMarkdownList(p));
+    return {
+        type: "AdaptiveCard",
+        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+        version: "1.5",
+        body: [
+            {
+                type: "TextBlock" as const,
+                text: "Standup Session",
+                size: "Large",
+                weight: "Bolder",
+            },
+            {
+                type: "TextBlock" as const,
+                text: "Enter your details by clicking the button below.",
                 wrap: true,
-                spacing: "None" as const,
-              })
-          ),
-        ]
-        : []),
-      {
-        type: "ActionSet",
-        actions: [
-          new TaskFetchAction({})
-            .withTitle("Fill out your status")
-            .withData(new TaskFetchData({ actionType: "standup_input" }))
-            .withStyle("positive"),
-          new ExecuteAction({
-            title: "Close standup",
-          })
-            .withStyle("default")
-            .withData({
-              action: "close_standup",
-              previousParkingLot: JSON.stringify(previousParkingLotItems),
-            }),
+            },
+            ...(completedResponses.map(c => ({
+                type: "TextBlock" as const,
+                text: `✅ ${c}`,
+                wrap: true,
+                spacing: "Small" as const,
+            } satisfies ITextBlock
+            ))),
+            ...(previousParkingLotItems && previousParkingLotItems.length > 0
+                ? [
+                    {
+                        type: "TextBlock" as const,
+                        text: "Discussed Previous Parking Lot Items:",
+                        wrap: true,
+                        spacing: "Medium" as const,
+                    },
+                    {
+                        type: "TextBlock",
+                        text: "Uncheck the values that still need discussion",
+                        wrap: true,
+                        size: "Small",
+                        weight: "Lighter",
+                        isSubtle: true,
+                        spacing: "None",
+                    } satisfies ITextBlock,
+                    ...previousParkingLotItems.map(
+                        (item, index) =>
+                            new ToggleInput(item, {
+                                id: `parking_lot_${index}`,
+                                value: `Discussed - ${item}`,
+                                valueOff: `Not Discussed - ${item}`,
+                                valueOn: `Discussed - ${item}`,
+                                wrap: true,
+                                spacing: "None" as const,
+                            })
+                    ),
+                ]
+                : []),
+            {
+                type: "ActionSet",
+                actions: [
+                    new TaskFetchAction({})
+                        .withTitle("Fill out your status")
+                        .withData(new TaskFetchData({ actionType: "standup_input" }))
+                        .withStyle("positive"),
+                    new ExecuteAction({
+                        title: "Close standup",
+                    })
+                        .withStyle("default")
+                        .withData({
+                            action: "close_standup",
+                            previousParkingLot: JSON.stringify(previousParkingLotItems),
+                        }),
+                ],
+            },
         ],
-      },
-    ],
-  };
+    };
 }
 
 export function createPageSelectionCard(
-  pages: { id: string; title: string }[],
-  sourceConversationId: string
+    pages: { id: string; title: string }[],
+    sourceConversationId: string
 ): IAdaptiveCard {
-  return {
-    type: "AdaptiveCard",
-    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-    version: "1.5",
-    body: [
-      {
-        type: "TextBlock" as const,
-        text: "Select OneNote Page for Standup",
-        size: "Large",
-        weight: "Bolder",
-      },
-      {
-        type: "TextBlock" as const,
-        text: "Choose a page to store your standup notes:",
-        wrap: true,
-      },
-      {
-        type: "Input.ChoiceSet",
-        id: "pageId",
-        style: "expanded",
-        isRequired: true,
-        choices: pages.map((page) => ({
-          title: page.title,
-          value: page.id,
-        })),
-      },
-      {
-        type: "ActionSet",
-        actions: [
-          new ExecuteAction({
-            title: "Register",
-          }).withData({
-            action: "register_standup",
-            sourceConversationId: sourceConversationId,
-          }),
+    return {
+        type: "AdaptiveCard",
+        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+        version: "1.5",
+        body: [
+            {
+                type: "TextBlock" as const,
+                text: "Select OneNote Page for Standup",
+                size: "Large",
+                weight: "Bolder",
+            },
+            {
+                type: "TextBlock" as const,
+                text: "Choose a page to store your standup notes:",
+                wrap: true,
+            },
+            {
+                type: "Input.ChoiceSet",
+                id: "pageId",
+                style: "expanded",
+                isRequired: true,
+                choices: pages.map((page) => ({
+                    title: page.title,
+                    value: page.id,
+                })),
+            },
+            {
+                type: "ActionSet",
+                actions: [
+                    new ExecuteAction({
+                        title: "Register",
+                    }).withData({
+                        action: "register_standup",
+                        sourceConversationId: sourceConversationId,
+                    }),
+                ],
+            },
         ],
-      },
-    ],
-  };
+    };
 }
 
 export function createParkingLotCard(
-  items: Array<{ item: string; userName: string | null }>
+    items: Array<{ item: string; userName: string | null }>
 ): IAdaptiveCard {
-  return new AdaptiveCard().withBody(
-    {
-      type: "ColumnSet",
-      columns: [
+    return new AdaptiveCard().withBody(
         {
-          type: "Column",
-          width: "stretch",
-          items: [
-            {
-              type: "TextBlock" as const,
-              text: "**Current Parking Lot Items**",
-              wrap: true,
-              style: "heading",
-            },
-          ],
+            type: "ColumnSet",
+            columns: [
+                {
+                    type: "Column",
+                    width: "stretch",
+                    items: [
+                        {
+                            type: "TextBlock" as const,
+                            text: "**Current Parking Lot Items**",
+                            wrap: true,
+                            style: "heading",
+                        },
+                    ],
+                },
+            ],
         },
-      ],
-    },
-    ...(items.length === 0
-      ? [
-        {
-          type: "TextBlock" as const,
-          text: "_No parking lot items have been added yet._",
-          wrap: true,
-          isSubtle: true,
-        },
-      ]
-      : items.map(({ item, userName }) => {
-        let itemText: string;
-        if (item.includes(SPECIAL_STRINGS.addedByPrefix)) {
-          itemText = item;
-        }
+        ...(items.length === 0
+            ? [
+                {
+                    type: "TextBlock" as const,
+                    text: "_No parking lot items have been added yet._",
+                    wrap: true,
+                    isSubtle: true,
+                },
+            ]
+            : items.map(({ item, userName }) => {
+                let itemText: string;
+                if (item.includes(SPECIAL_STRINGS.addedByPrefix)) {
+                    itemText = item;
+                }
 
-        if (userName == null) {
-          itemText = item;
-        } else {
-          itemText = `${item} (added by ${userName})`;
-        }
+                if (userName == null) {
+                    itemText = item;
+                } else {
+                    itemText = `${item} (added by ${userName})`;
+                }
 
-        return {
-          type: "TextBlock" as const,
-          text: itemText,
-          wrap: true,
-          spacing: "Small" as const,
-          "separator": true
-        } satisfies ITextBlock;
-      }))
-  );
+                return {
+                    type: "TextBlock" as const,
+                    text: itemText,
+                    wrap: true,
+                    spacing: "Small" as const,
+                    "separator": true
+                } satisfies ITextBlock;
+            }))
+    );
 }
 
 export function createTaskModule(
-  user: User,
-  existingResponse?: StandupResponse,
-  plannedWorkFromLastTime?: string
+    user: User,
+    existingResponse?: StandupResponse,
+    plannedWorkFromLastTime?: string
 ): IAdaptiveCard {
-  return {
-    type: "AdaptiveCard",
-    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-    version: "1.5",
-    body: [
-      {
-        type: "TextBlock" as const,
-        text: `${user.name}'s Standup Update`,
-        size: "Large",
-        weight: "Bolder",
-      } satisfies ITextBlock,
-      ...(plannedWorkFromLastTime
-        ? [
-          {
-            type: "TextBlock" as const,
-            text: "Planned work from last time:",
-            wrap: true,
-            weight: 'Bolder',
-          } satisfies ITextBlock,
-          {
-            type: "TextBlock" as const,
-            text: convertTextToMarkdownList(plannedWorkFromLastTime),
-            wrap: true,
-            isSubtle: true,
-            spacing: 'None',
-          } satisfies ITextBlock,
-        ]
-        : []),
-      {
-        type: "TextBlock" as const,
-        text: "What did you do since last standup?",
-        wrap: true,
-      } satisfies ITextBlock,
-      {
-        type: "Input.Text",
-        id: "completedWork",
-        placeholder: "Enter your completed tasks and progress...",
-        isMultiline: true,
-        isRequired: true,
-        style: "Text",
-        value: existingResponse?.completedWork,
-        errorMessage: "Got nothing done? Just say so! 😄",
-      } satisfies ITextInput,
-      {
-        type: "TextBlock" as const,
-        text: "What do you plan to do today?",
-        wrap: true,
-      } satisfies ITextBlock,
-      {
-        type: "Input.Text",
-        id: "plannedWork",
-        placeholder: "Enter your planned tasks for today...",
-        isMultiline: true,
-        isRequired: true,
-        style: "Text",
-        value: existingResponse?.plannedWork,
-        errorMessage: "Got nothing planned? Just say so! 😄",
-      } satisfies ITextInput,
-      {
-        type: "TextBlock" as const,
-        text: "Parking Lot",
-        wrap: true,
-      } satisfies ITextBlock,
-      {
-        type: "Input.Text",
-        id: "parkingLot",
-        placeholder: "Anything you want to discuss as a team?",
-        isMultiline: true,
-        style: "Text",
-        value: existingResponse?.parkingLot,
-      } satisfies ITextInput,
-      {
-        type: "ActionSet",
-        actions: [
-          new SubmitAction({
-            title: "Submit",
-          }).withData({
-            action: "submit_standup",
-            userId: user.id,
-          }),
+    return {
+        type: "AdaptiveCard",
+        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+        version: "1.5",
+        body: [
+            {
+                type: "TextBlock" as const,
+                text: `${user.name}'s Standup Update`,
+                size: "Large",
+                weight: "Bolder",
+            } satisfies ITextBlock,
+            ...(plannedWorkFromLastTime
+                ? [
+                    {
+                        type: "TextBlock" as const,
+                        text: "Planned work from last time:",
+                        wrap: true,
+                        weight: 'Bolder',
+                    } satisfies ITextBlock,
+                    {
+                        type: "TextBlock" as const,
+                        text: convertTextToMarkdownList(plannedWorkFromLastTime),
+                        wrap: true,
+                        isSubtle: true,
+                        spacing: 'None',
+                    } satisfies ITextBlock,
+                ]
+                : []),
+            {
+                type: "TextBlock" as const,
+                text: "What did you do since last standup?",
+                wrap: true,
+            } satisfies ITextBlock,
+            {
+                type: "Input.Text",
+                id: "completedWork",
+                placeholder: "Enter your completed tasks and progress...",
+                isMultiline: true,
+                isRequired: true,
+                style: "Text",
+                value: existingResponse?.completedWork,
+                errorMessage: "Got nothing done? Just say so! 😄",
+            } satisfies ITextInput,
+            {
+                type: "TextBlock" as const,
+                text: "What do you plan to do today?",
+                wrap: true,
+            } satisfies ITextBlock,
+            {
+                type: "Input.Text",
+                id: "plannedWork",
+                placeholder: "Enter your planned tasks for today...",
+                isMultiline: true,
+                isRequired: true,
+                style: "Text",
+                value: existingResponse?.plannedWork,
+                errorMessage: "Got nothing planned? Just say so! 😄",
+            } satisfies ITextInput,
+            {
+                type: "TextBlock" as const,
+                text: "Parking Lot",
+                wrap: true,
+            } satisfies ITextBlock,
+            {
+                type: "Input.Text",
+                id: "parkingLot",
+                placeholder: "Anything you want to discuss as a team?",
+                isMultiline: true,
+                style: "Text",
+                value: existingResponse?.parkingLot,
+            } satisfies ITextInput,
+            {
+                type: "ActionSet",
+                actions: [
+                    new SubmitAction({
+                        title: "Submit",
+                    }).withData({
+                        action: "submit_standup",
+                        userId: user.id,
+                    }),
+                ],
+            } satisfies IActionSet,
         ],
-      } satisfies IActionSet,
-    ],
-  };
+    };
 }
 
 export function createHistoricalStandupsCard(
-  histories: Array<{
-    date: Date;
-    groupName?: string;
-    responses: Array<{
-      userName: string;
-      completedWork: string;
-      plannedWork: string;
-      parkingLot?: string;
-    }>;
-  }>
+    histories: Array<{
+        date: Date;
+        groupName?: string;
+        responses: Array<{
+            userName: string;
+            completedWork: string;
+            plannedWork: string;
+            parkingLot?: string;
+        }>;
+    }>
 ): IAdaptiveCard {
-  return {
-    type: "AdaptiveCard",
-    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-    version: "1.5",
-    body: [
-      {
-        type: "TextBlock" as const,
-        text: "Historical Standups",
-        size: "Large",
-        weight: "Bolder",
-      } satisfies ITextBlock,
-      ...histories.flatMap((history) => [
-        {
-          type: "Container" as const,
-          items: [
+    return {
+        type: "AdaptiveCard",
+        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+        version: "1.5",
+        body: [
             {
-              type: "TextBlock" as const,
-              text: dateFormatter.format(history.date),
-              wrap: true,
-              style: "heading" as const,
+                type: "TextBlock" as const,
+                text: "Historical Standups",
+                size: "Large",
+                weight: "Bolder",
             } satisfies ITextBlock,
-            ...(history.groupName
-              ? [
+            ...histories.flatMap((history) => [
                 {
-                  type: "TextBlock" as const,
-                  text: `Group: ${history.groupName}`,
-                  wrap: true,
-                  size: "Small" as const,
-                } satisfies ITextBlock,
-              ]
-              : []),
-          ],
-        },
-        ...history.responses
-          .filter((r) => r.completedWork || r.plannedWork)
-          .flatMap((response): CardElementArray => [
-            {
-              type: "TextBlock" as const,
-              text: `**${response.userName}**`,
-              wrap: true,
-              separator: true,
-            },
-            {
-              type: "Table",
-              columns: [
-                {
-                  width: 2,
-                },
-                {
-                  width: 6,
-                },
-              ],
-              rows: [
-                {
-                  type: "TableRow" as const,
-                  cells: [
-                    {
-                      type: "TableCell" as const,
-                      items: [
+                    type: "Container" as const,
+                    items: [
                         {
-                          type: "TextBlock" as const,
-                          text: "Completed",
-                          wrap: true,
-                        },
-                      ],
-                    },
-                    {
-                      type: "TableCell" as const,
-                      items: [
-                        {
-                          type: "TextBlock" as const,
-                          text: convertTextToMarkdownList(
-                            response.completedWork
-                          ),
-                          wrap: true,
-                          weight: "Lighter",
-                        },
-                      ],
-                    },
-                  ],
+                            type: "TextBlock" as const,
+                            text: dateFormatter.format(history.date),
+                            wrap: true,
+                            style: "heading" as const,
+                        } satisfies ITextBlock,
+                        ...(history.groupName
+                            ? [
+                                {
+                                    type: "TextBlock" as const,
+                                    text: `Group: ${history.groupName}`,
+                                    wrap: true,
+                                    size: "Small" as const,
+                                } satisfies ITextBlock,
+                            ]
+                            : []),
+                    ],
                 },
-                {
-                  type: "TableRow" as const,
-                  cells: [
-                    {
-                      type: "TableCell" as const,
-                      items: [
+                ...history.responses
+                    .filter((r) => r.completedWork || r.plannedWork)
+                    .flatMap((response): CardElementArray => [
                         {
-                          type: "TextBlock" as const,
-                          text: "Planned",
-                          wrap: true,
+                            type: "TextBlock" as const,
+                            text: `**${response.userName}**`,
+                            wrap: true,
+                            separator: true,
                         },
-                      ],
-                    },
-                    {
-                      type: "TableCell" as const,
-                      items: [
                         {
-                          type: "TextBlock" as const,
-                          text: convertTextToMarkdownList(response.plannedWork),
-                          wrap: true,
-                          weight: "Lighter",
+                            type: "Table",
+                            columns: [
+                                {
+                                    width: 2,
+                                },
+                                {
+                                    width: 6,
+                                },
+                            ],
+                            rows: [
+                                {
+                                    type: "TableRow" as const,
+                                    cells: [
+                                        {
+                                            type: "TableCell" as const,
+                                            items: [
+                                                {
+                                                    type: "TextBlock" as const,
+                                                    text: "Completed",
+                                                    wrap: true,
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            type: "TableCell" as const,
+                                            items: [
+                                                {
+                                                    type: "TextBlock" as const,
+                                                    text: convertTextToMarkdownList(
+                                                        response.completedWork
+                                                    ),
+                                                    wrap: true,
+                                                    weight: "Lighter",
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: "TableRow" as const,
+                                    cells: [
+                                        {
+                                            type: "TableCell" as const,
+                                            items: [
+                                                {
+                                                    type: "TextBlock" as const,
+                                                    text: "Planned",
+                                                    wrap: true,
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            type: "TableCell" as const,
+                                            items: [
+                                                {
+                                                    type: "TextBlock" as const,
+                                                    text: convertTextToMarkdownList(response.plannedWork),
+                                                    wrap: true,
+                                                    weight: "Lighter",
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
                         },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            // Skipping parking lot items for now
-            // ...(response.parkingLot
-            //   ? [
-            //       {
-            //         type: "TextBlock" as const,
-            //         text: "Parking Lot Items:",
-            //         wrap: true,
-            //         size: "small",
-            //       },
-            //       {
-            //         type: "TextBlock" as const,
-            //         text: convertTextToMarkdownList(
-            //           response.parkingLot,
-            //           response.userName
-            //         ),
-            //         wrap: true,
-            //         size: "small",
-            //         weight: "lighter",
-            //       },
-            //     ]
-            //   : []),
-          ]),
-      ]),
-    ],
-  };
+                        // Skipping parking lot items for now
+                        // ...(response.parkingLot
+                        //   ? [
+                        //       {
+                        //         type: "TextBlock" as const,
+                        //         text: "Parking Lot Items:",
+                        //         wrap: true,
+                        //         size: "small",
+                        //       },
+                        //       {
+                        //         type: "TextBlock" as const,
+                        //         text: convertTextToMarkdownList(
+                        //           response.parkingLot,
+                        //           response.userName
+                        //         ),
+                        //         wrap: true,
+                        //         size: "small",
+                        //         weight: "lighter",
+                        //       },
+                        //     ]
+                        //   : []),
+                    ]),
+            ]),
+        ],
+    };
 }

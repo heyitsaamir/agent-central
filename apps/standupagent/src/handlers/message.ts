@@ -1,6 +1,5 @@
 import { ChatPrompt } from "@microsoft/teams.ai";
 import { IMessageActivity, MentionEntity } from "@microsoft/teams.api";
-import { OpenAIChatModel } from "@microsoft/teams.openai";
 import { executeRegister } from "../commands/register";
 import { executeCloseStandup, executeStartStandup } from "../commands/standup";
 import { CommandContext } from "../commands/types";
@@ -15,6 +14,7 @@ import {
 } from "../models/AdaptiveCards";
 import { StandupCoordinator } from "../models/StandupCoordinator";
 import { registerGroupChatFunctions, registerPersonalChatFunctions } from "./nlpFunctions";
+import { buildChatPromptModel } from "../utils/chatPromptModel";
 
 export async function handleMessage(
     activity: IMessageActivity,
@@ -43,12 +43,7 @@ export async function handleMessage(
 
     const nlpPrompt = new ChatPrompt({
         instructions,
-        model: new OpenAIChatModel({
-            apiKey: process.env.AZURE_OPENAI_API_KEY,
-            endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-            apiVersion: process.env.AZURE_OPENAI_API_VERSION,
-            model: process.env.AZURE_OPENAI_MODEL_DEPLOYMENT_NAME!,
-        }),
+        model: buildChatPromptModel()
     });
 
     const mentions = activity.entities
@@ -171,6 +166,21 @@ export async function handleMessage(
             return;
         }
 
+        if (text.includes("custom-instruction") && isGroupChat) {
+            const customInstruction = activity.text.slice("!custom-instruction".length).trim();
+            const group = await standup.validateGroup(
+                context.conversationId,
+                context.tenantId
+            );
+            if (!group) {
+                await partialContext.send(
+                    "No standup group registered. Use !register <onenote-link> to create one."
+                );
+                return;
+            }
+            await group.setCustomInstructions(customInstruction);
+        }
+
         // Parking lot command (only for group chats)
         if (text.startsWith("!parkinglot") && isGroupChat) {
             const parkingLotItem = activity.text.slice("!parkinglot".length).trim();
@@ -239,7 +249,7 @@ export async function handleMessage(
         if (isGroupChat) {
             registerGroupChatFunctions(nlpPrompt, context, standup, messageContext, activity, text);
         } else {
-            registerPersonalChatFunctions(nlpPrompt, context, standup, messageContext, activity, text);
+            registerPersonalChatFunctions(nlpPrompt, context, standup, messageContext);
         }
 
         const result = await nlpPrompt.send(text);
