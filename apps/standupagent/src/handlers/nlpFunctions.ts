@@ -92,7 +92,7 @@ export function registerGroupChatFunctions(
                 context.tenantId
             );
             if (!group) {
-                return "No standup group registered. Use !register <onenote-link> to create one.";
+                return "No standup group registered. Use !register to create one.";
             }
 
             await group.setSaveHistory(enable);
@@ -120,7 +120,7 @@ export function registerGroupChatFunctions(
                 context.tenantId
             );
             if (!group) {
-                return "No standup group registered. Use !register <onenote-link> to create one.";
+                return "No standup group registered. Use !register to create one.";
             }
 
             await group.setCustomInstructions(customInstruction);
@@ -136,7 +136,7 @@ export function registerGroupChatFunctions(
         );
         if (!group) {
             await messageContext.send(
-                "No standup group registered. Use !register <onenote-link> to create one."
+                "No standup group registered. Use !register to create one."
             );
             messageContext.didMessageUser = true;
             return;
@@ -188,7 +188,7 @@ export function registerGroupChatFunctions(
             context.tenantId
         );
         if (!group) {
-            return "No standup group registered. Use !register <onenote-link> to create one.";
+            return "No standup group registered. Use !register to create one.";
         }
         const clearedItems = await group.clearParkingLot(context.userId);
         return clearedItems.message;
@@ -241,7 +241,7 @@ export function registerGroupChatFunctions(
             );
             if (!group) {
                 await messageContext.send(
-                    "No standup group registered. Use !register <onenote-link> to create one."
+                    "No standup group registered. Use !register to create one."
                 );
                 messageContext.didMessageUser = true;
                 return;

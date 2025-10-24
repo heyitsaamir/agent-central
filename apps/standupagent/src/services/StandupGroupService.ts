@@ -74,7 +74,7 @@ export class StandupGroupService {
             return {
                 type: "error",
                 message:
-                    "No standup group registered. Use !register <onenote-link> to create one.",
+                    "No standup group registered. Use !register to create one.",
             };
         }
 
@@ -116,7 +116,7 @@ export class StandupGroupService {
             return {
                 type: "error",
                 message:
-                    "No standup group registered. Use !register <onenote-link> to create one.",
+                    "No standup group registered. Use !register to create one.",
             };
         }
 
@@ -162,7 +162,7 @@ export class StandupGroupService {
             return {
                 type: "error",
                 message:
-                    "No standup group registered. Use !register <onenote-link> to create one.",
+                    "No standup group registered. Use !register to create one.",
             };
         }
 
@@ -378,7 +378,7 @@ It's possible that there is no output that is warranted. When that happens, simp
             return {
                 type: "error",
                 message:
-                    "No standup group registered. Use !register <onenote-link> to create one.",
+                    "No standup group registered. Use !register to create one.",
             };
         }
 
@@ -411,7 +411,7 @@ It's possible that there is no output that is warranted. When that happens, simp
             return {
                 type: "error",
                 message:
-                    "No standup group registered. Use !register <onenote-link> to create one.",
+                    "No standup group registered. Use !register to create one.",
             };
         }
         await group.clearParkingLot(userId);
@@ -433,7 +433,7 @@ It's possible that there is no output that is warranted. When that happens, simp
             return {
                 type: "error",
                 message:
-                    "No standup group registered. Use !register <onenote-link> to create one.",
+                    "No standup group registered. Use !register to create one.",
             };
         }
 

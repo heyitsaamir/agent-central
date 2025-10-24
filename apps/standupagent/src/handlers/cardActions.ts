@@ -1,7 +1,6 @@
 import { SPECIAL_STRINGS } from "../models/AdaptiveCards";
 import { StandupCoordinator } from "../models/StandupCoordinator";
 import { StandupResponse } from "../models/types";
-import { OneNoteStorage } from "../services/OneNoteStorage";
 
 const safeJsonParse: <T>(jsonString: string, def: T) => T = <T>(
     jsonString: string,

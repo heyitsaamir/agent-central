@@ -17,7 +17,7 @@ export async function executeRegister(
 
     const includeHistory = text.includes("--history");
 
-    // Create a new group with no storage if OneNote isn't specified
+    // Create a new group with no storage
     const result = await standup.registerGroup(
         conversationId,
         conversationName,

@@ -32,7 +32,7 @@ This is a **Microsoft Teams bot application** that manages standup meetings. It'
    - `StandupGroupService` - Manages group standup operations
    - `UserStandupService` - Handles individual user settings and operations
    - `StandupGroupManager` - Uses proxy pattern to auto-persist state changes
-   - Multiple storage implementations: Cosmos DB, OneNote, File, In-Memory
+   - Multiple storage implementations: Cosmos DB, File, In-Memory
 
 3. **Event Handlers** (`src/handlers/`)
    - `message.ts` - Processes incoming chat messages
@@ -54,8 +54,7 @@ This is a **Microsoft Teams bot application** that manages standup meetings. It'
 ### Storage Architecture
 
 The app supports multiple storage backends through the `IStandupStorage` interface:
-- **Cosmos DB** - Primary production storage
-- **OneNote** - Alternative cloud storage
+- **Cosmos DB** - Primary production storage (via MongoDB)
 - **File Storage** - Local development
 - **In-Memory** - Testing
 

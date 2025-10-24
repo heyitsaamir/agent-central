@@ -78,14 +78,8 @@ export class PersistentStandupService {
         const data = await this.groupStorage.get(key.id, key.tenantId);
         if (!data) return null;
 
-        // Create NoStorage or OneNoteStorage based on stored config
-        let storage: IStandupStorage;
-        if (data.storage?.type === "onenote" && data.storage.targetId) {
-            // You'll need to inject the http client here
-            throw new Error("OneNote storage restoration not implemented");
-        } else {
-            storage = new NoStorage();
-        }
+        // Create NoStorage based on stored config
+        const storage: IStandupStorage = new NoStorage();
 
         // Reconstruct the group
         const group = new StandupGroup(

@@ -6,7 +6,7 @@ export interface Page {
 }
 
 export interface StorageInfo {
-  type: "onenote" | "none" | string;
+  type: "none" | string;
   targetId?: string;
 }
 

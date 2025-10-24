@@ -121,7 +121,7 @@ export async function handleMessage(
                 );
                 if (!group) {
                     await partialContext.send(
-                        "No standup group registered. Use !register <onenote-link> to create one."
+                        "No standup group registered. Use !register to create one."
                     );
                     return;
                 }
@@ -176,7 +176,7 @@ export async function handleMessage(
             );
             if (!group) {
                 await partialContext.send(
-                    "No standup group registered. Use !register <onenote-link> to create one."
+                    "No standup group registered. Use !register to create one."
                 );
                 return;
             }
@@ -218,7 +218,7 @@ export async function handleMessage(
             );
             if (!group) {
                 await partialContext.send(
-                    "No standup group registered. Use !register <onenote-link> to create one."
+                    "No standup group registered. Use !register to create one."
                 );
                 return;
             }
