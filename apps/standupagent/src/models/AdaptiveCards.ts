@@ -364,50 +364,6 @@ export function createStandupCard(
     };
 }
 
-export function createPageSelectionCard(
-    pages: { id: string; title: string }[],
-    sourceConversationId: string
-): IAdaptiveCard {
-    return {
-        type: "AdaptiveCard",
-        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-        version: "1.5",
-        body: [
-            {
-                type: "TextBlock" as const,
-                text: "Select OneNote Page for Standup",
-                size: "Large",
-                weight: "Bolder",
-            },
-            {
-                type: "TextBlock" as const,
-                text: "Choose a page to store your standup notes:",
-                wrap: true,
-            },
-            {
-                type: "Input.ChoiceSet",
-                id: "pageId",
-                style: "expanded",
-                isRequired: true,
-                choices: pages.map((page) => ({
-                    title: page.title,
-                    value: page.id,
-                })),
-            },
-            {
-                type: "ActionSet",
-                actions: [
-                    new ExecuteAction({
-                        title: "Register",
-                    }).withData({
-                        action: "register_standup",
-                        sourceConversationId: sourceConversationId,
-                    }),
-                ],
-            },
-        ],
-    };
-}
 
 export function createParkingLotCard(
     items: Array<{ item: string; userName: string | null }>

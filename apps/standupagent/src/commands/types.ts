@@ -1,20 +1,21 @@
 import { IActivityContext } from "@microsoft/teams.apps";
 
 export interface CommandContext {
-  app: IActivityContext["app"];
-  send: IActivityContext["send"];
-  conversationId: string;
-  userId: string;
-  userName: string;
-  api: IActivityContext["api"];
-  mentions: Array<{ id: string; name: string }>;
-  signin?: IActivityContext["signin"];
-  isSignedIn?: IActivityContext["isSignedIn"];
-  signout?: IActivityContext["signout"];
-  tenantId: string;
+    app: IActivityContext["app"];
+    send: IActivityContext["send"];
+    conversationId: string;
+    conversationName: string | null;
+    userId: string;
+    userName: string;
+    api: IActivityContext["api"];
+    mentions: Array<{ id: string; name: string }>;
+    signin?: IActivityContext["signin"];
+    isSignedIn?: IActivityContext["isSignedIn"];
+    signout?: IActivityContext["signout"];
+    tenantId: string;
 }
 
 export interface Command {
-  name: string;
-  execute: (context: CommandContext) => Promise<void>;
+    name: string;
+    execute: (context: CommandContext) => Promise<void>;
 }

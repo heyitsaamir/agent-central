@@ -149,6 +149,7 @@ export interface GroupStorageItem extends BaseStorageItem {
     activeStandupActivityId: string | null;
     saveHistory: boolean;
     customInstructions: string | null;
+    conversationName: string | null
 }
 
 export interface HistoryStorageItem extends BaseStorageItem {

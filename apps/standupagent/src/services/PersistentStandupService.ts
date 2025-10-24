@@ -98,7 +98,8 @@ export class PersistentStandupService {
             data.startedAt,
             data.activeStandupActivityId || null,
             data.saveHistory || false,
-            data.customInstructions || null
+            data.customInstructions || null,
+            data.conversationName || null
         );
 
         return this.wrapGroupData(group);
@@ -112,14 +113,16 @@ export class PersistentStandupService {
             activeResponses,
             activeStandupActivityId,
             saveHistory,
-            customInstructions
+            customInstructions,
+            name,
         ] = await Promise.all([
             group.getUsers(),
             group.getStartedAt(),
             group.getActiveResponses(),
             group.getActiveStandupActivityId(),
             group.getSaveHistory(),
-            group.getCustomInstructions()
+            group.getCustomInstructions(),
+            group.getName(),
         ]);
 
         const groupData: GroupStorageItem = {
@@ -132,7 +135,8 @@ export class PersistentStandupService {
             activeStandupActivityId,
             storage: group.storage.getStorageInfo(),
             saveHistory,
-            customInstructions
+            customInstructions,
+            conversationName: name
         };
 
         await this.groupStorage.set(key.id, groupData);
@@ -147,13 +151,15 @@ export class PersistentStandupService {
             activeStandupActivityId,
             saveHistory,
             customInstructions,
+            name
         ] = await Promise.all([
             group.getUsers(),
             group.getStartedAt(),
             group.getActiveResponses(),
             group.getActiveStandupActivityId(),
             group.getSaveHistory(),
-            group.getCustomInstructions()
+            group.getCustomInstructions(),
+            group.getName()
         ]);
 
         // Create a new group with the fetched data
@@ -167,7 +173,8 @@ export class PersistentStandupService {
             startedAt,
             activeStandupActivityId,
             saveHistory,
-            customInstructions
+            customInstructions,
+            name
         );
     }
 
@@ -215,7 +222,9 @@ export class PersistentStandupService {
                         groupData.activeResponses || [],
                         groupData.startedAt,
                         groupData.activeStandupActivityId || null,
-                        groupData.saveHistory || false
+                        groupData.saveHistory || false,
+                        groupData.customInstructions || null,
+                        groupData.conversationName || null
                     );
                     return this.wrapGroupData(group);
                 })

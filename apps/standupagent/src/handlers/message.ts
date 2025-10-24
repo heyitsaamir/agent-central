@@ -23,6 +23,7 @@ export async function handleMessage(
         | "mentions"
         | "activity"
         | "conversationId"
+        | "conversationName"
         | "userId"
         | "userName"
         | "tenantId"
@@ -58,6 +59,7 @@ export async function handleMessage(
     const context: CommandContext = {
         ...partialContext,
         conversationId: activity.conversation.id,
+        conversationName: activity.conversation.name ?? null,
         userId: activity.from.id,
         userName: activity.from.name,
         mentions: mentions || [],

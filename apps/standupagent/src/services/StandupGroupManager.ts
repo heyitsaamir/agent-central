@@ -29,7 +29,8 @@ export class StandupGroupManager {
                                 "setSaveHistory",
                                 "addWorkItem",
                                 "clearParkingLot",
-                                "setCustomInstructions"
+                                "setCustomInstructions",
+                                "setName"
                             ].includes(prop as string)
                         ) {
                             await this.persistentService.saveGroup(target);
@@ -48,7 +49,8 @@ export class StandupGroupManager {
         storage: IStandupStorage,
         creator: User,
         tenantId: string,
-        saveHistory: boolean = false
+        saveHistory: boolean = false,
+        conversationName: string | null,
     ): Promise<StandupGroup> {
         const group = new StandupGroup(
             conversationId,
@@ -59,7 +61,7 @@ export class StandupGroupManager {
             [],
             null,
             null,
-            saveHistory
+            saveHistory, null, conversationName
         );
         await this.persistentService.saveGroup(group);
         return this.wrapGroup(group);

@@ -30,10 +30,11 @@ export class StandupGroupService {
 
     async registerGroup(
         conversationId: string,
-        _storage: IStandupStorage,
-        _creator: User,
+        conversationName: string | null,
+        storage: IStandupStorage,
+        creator: User,
         tenantId: string,
-        _includeHistory: boolean = true
+        includeHistory: boolean = true
     ): Promise<Result<{ message: string }>> {
         const existingGroup = await this.persistentService.loadGroup(
             conversationId,
@@ -45,6 +46,16 @@ export class StandupGroupService {
                 message: "A standup group is already registered for this conversation.",
             };
         }
+
+        // Create and persist the new group
+        await this.groupManager.createGroup(
+            conversationId,
+            storage,
+            creator,
+            tenantId,
+            includeHistory,
+            conversationName
+        );
 
         return {
             type: "success",

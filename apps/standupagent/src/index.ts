@@ -1,17 +1,18 @@
-import { App } from "@microsoft/teams.apps";
+import { App, } from "@microsoft/teams.apps";
 import pkg from "../package.json";
 import { handleCardAction } from "./handlers/cardActions";
 import { handleDialogOpen, handleDialogSubmit } from "./handlers/dialog";
 import { handleMessage } from "./handlers/message";
 import { ensureStandupInitialized } from "./utils/initializeStandup";
 import { getToken } from "./utils/tokenRetrieval";
+import { stripMentionsText } from "@microsoft/teams.api";
 
 const PORT = +(process.env.PORT || 3000);
 
 
 const app = new App({
     token: getToken
-});
+})
 
 // Handle incoming messages
 app.on(
@@ -20,6 +21,7 @@ app.on(
         console.log(
             `Handling message using teams app version ${pkg.dependencies["@microsoft/teams.apps"]}`
         );
+        activity.text = stripMentionsText(activity)
         console.log("Received message:", activity);
         const standup = await ensureStandupInitialized();
         if (standup.type === "error") {

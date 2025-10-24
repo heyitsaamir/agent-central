@@ -66,9 +66,38 @@ export class UserStandupService {
         }
     }
 
-    async setDefaultStandup(userId: string, tenantId: string, standupGroupId: string): Promise<Result<{ message: string }>> {
+    async setDefaultStandup(userId: string, tenantId: string, standupGroupIdOrName: string): Promise<Result<{ message: string }>> {
         try {
-            await this.userSettingsService.setDefaultStandup(userId, tenantId, standupGroupId);
+            if (!this.groupService) {
+                throw new Error("GroupService not initialized");
+            }
+
+            // Get all groups the user belongs to
+            const allGroups = await this.groupService.getAllGroups(tenantId);
+            const userGroups = (await Promise.all(
+                allGroups.map(async (group) => {
+                    const users = await group.getUsers();
+                    if (users.some(u => u.id === userId)) {
+                        return group;
+                    }
+                    return null;
+                })
+            )).filter((g): g is NonNullable<typeof g> => g !== null);
+
+            // Try to find the group by ID (case-insensitive) or name
+            const matchingGroup = userGroups.find(g =>
+                g.conversationId.toLowerCase() === standupGroupIdOrName.toLowerCase() ||
+                g.conversationName?.toLowerCase() === standupGroupIdOrName.toLowerCase()
+            );
+
+            if (!matchingGroup) {
+                return {
+                    type: "error",
+                    message: `Standup group '${standupGroupIdOrName}' not found or you don't have access to it.`
+                };
+            }
+
+            await this.userSettingsService.setDefaultStandup(userId, tenantId, matchingGroup.conversationId);
             return {
                 type: "success",
                 data: { message: "Default standup set successfully" },
@@ -84,7 +113,7 @@ export class UserStandupService {
 
 
 
-    async getStandupsForUser(userId: string, tenantId: string): Promise<Result<{ standups: Array<{ conversationId: string; isDefault: boolean }> }>> {
+    async getStandupsForUser(userId: string, tenantId: string): Promise<Result<{ standups: Array<{ conversationName: string | null, conversationId: string; isDefault: boolean }> }>> {
         try {
             if (!this.groupService) {
                 throw new Error("GroupService not initialized");
@@ -92,18 +121,26 @@ export class UserStandupService {
 
             const allGroups = await this.groupService.getAllGroups(tenantId);
             const userSettings = await this.userSettingsService.getUserSettings(userId, tenantId);
+
             const userStandups = (await Promise.all(
                 allGroups.map(async (group) => {
                     const users = await group.getUsers();
                     if (users.some(u => u.id === userId)) {
+                        const isDefault = userSettings?.defaultStandupGroup &&
+                            group.conversationId.toLowerCase() === userSettings.defaultStandupGroup.toLowerCase();
+                        console.log(`DEBUG comparing group.conversationId "${group.conversationId}" === userSettings.defaultStandupGroup "${userSettings?.defaultStandupGroup}" -> ${isDefault}`);
                         return {
                             conversationId: group.conversationId,
-                            isDefault: group.conversationId === userSettings?.defaultStandupGroup
+                            isDefault,
+                            conversationName: group.conversationName
                         };
                     }
                     return null;
                 })
-            )).filter((g): g is { conversationId: string; isDefault: boolean } => g !== null);
+            )).filter((g): g is { conversationId: string; conversationName: string | null, isDefault: boolean } => g !== null);
+
+            console.log('DEBUG userStandups before length check:', JSON.stringify(userStandups, null, 2));
+
             if (userStandups.length === 1) {
                 userStandups[0].isDefault = true; // If only one standup, set it as default
             }

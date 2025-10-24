@@ -14,8 +14,17 @@ export class StandupGroup {
         private startedAt: string | null = null,
         private activeStandupActivityId: string | null = null,
         private saveHistory: boolean = false,
-        private customInstructions: string | null = null
+        private customInstructions: string | null = null,
+        public conversationName: string | null = null,
     ) {
+    }
+
+    async setName(value: string) {
+        this.conversationName = value;
+    }
+
+    async getName(): Promise<string | null> {
+        return this.conversationName
     }
 
     async getSaveHistory(): Promise<boolean> {

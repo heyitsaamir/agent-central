@@ -299,16 +299,16 @@ export function registerPersonalChatFunctions(
         {
             type: "object",
             properties: {
-                standupId: {
+                standupIdOrName: {
                     type: "string",
-                    description: "The ID of the standup group to set as default",
+                    description: "The ID or Name of the standup group to set as default",
                 },
             },
             required: ["standupId"],
         },
-        async (args: { standupId: string }) => {
+        async (args: { standupIdOrName: string }) => {
             console.log("Setting default standup");
-            const result = await standup.setDefaultStandup(context.userId, context.tenantId, args.standupId);
+            const result = await standup.setDefaultStandup(context.userId, context.tenantId, args.standupIdOrName);
 
             if (result.type === "error") {
                 await messageContext.send(result.message);
@@ -339,12 +339,13 @@ export function registerPersonalChatFunctions(
         }
 
         let message = "**Your Standups:**\n\n";
-        standups.forEach((standup: { conversationId: string; isDefault: boolean }) => {
-            message += `• ${standup.conversationId}${standup.isDefault ? " (default)" : ""}\n`;
+        standups.forEach((standup: { conversationName: string | null; conversationId: string; isDefault: boolean }) => {
+            message += `- ${standup.conversationName ? `${standup.conversationName} ` : ''}${standup.conversationId}${standup.isDefault ? " (default)" : ""}\n\n`;
         });
 
         await messageContext.send(message);
         messageContext.didMessageUser = true;
+        return message
     });
 
 
@@ -388,14 +389,14 @@ export function registerPersonalChatFunctions(
             return;
         }
 
-        const { workItems, groupId } = result.data;
+        const { workItems, groupId, groupName } = result.data;
         if (workItems.length === 0) {
             await messageContext.send(`You haven't added any work items to your default standup group (${groupId}) yet.`);
             messageContext.didMessageUser = true;
             return;
         }
 
-        let message = `**Your Work Items for ${groupId}:**\n\n`;
+        let message = `**Your Work Items for ${groupName ?? groupId}:**\n\n`;
         workItems.forEach((item: string, index: number) => {
             message += `${index + 1}. ${item}\n`;
         });
