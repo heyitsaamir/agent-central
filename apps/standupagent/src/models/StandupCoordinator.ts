@@ -35,7 +35,7 @@ export class StandupCoordinator {
         tenantId: string,
         includeHistory: boolean = true
     ): Promise<Result<{ message: string }>> {
-        return await this.groupService.registerGroup(conversationId, conversationName, storage, creator, tenantId, includeHistory);
+        return await this.groupService.registerGroup(conversationId, conversationName, storage, creator, tenantId, includeHistory,);
     }
 
     async addUsers(

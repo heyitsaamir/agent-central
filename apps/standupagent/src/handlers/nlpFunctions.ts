@@ -35,20 +35,17 @@ export function registerGroupChatFunctions(
 
     nlpPrompt.function("add", "Add users to the standup group", async () => {
         console.log("Adding users to the standup group");
-        messageContext.didMessageUser = true;
-        await executeAddUsers(context, standup);
+        return await executeAddUsers(context, standup);
     });
 
     nlpPrompt.function("remove", "Remove users from the standup group", async () => {
         console.log("Removing users from the standup group");
-        messageContext.didMessageUser = true;
-        await executeRemoveUsers(context, standup);
+        return await executeRemoveUsers(context, standup);
     });
 
     nlpPrompt.function("groupDetails", "Show standup group information", async () => {
         console.log("Showing standup group information");
-        messageContext.didMessageUser = true;
-        await executeGroupDetails(context, standup);
+        return await executeGroupDetails(context, standup);
     });
 
     // Standup session management
@@ -248,10 +245,7 @@ export function registerGroupChatFunctions(
             }
 
             await group.addParkingLotItem(context.userId, args.item);
-            await messageContext.send(
-                "Your parking lot item has been saved for the next standup."
-            );
-            messageContext.didMessageUser = true;
+            return `Parking lot item "${args.item}" was saved successfully`
         }
     );
 
